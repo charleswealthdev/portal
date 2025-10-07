@@ -7,7 +7,9 @@ const {
   getGlobalLeaderboard,
   getGameLeaderboard
 } = require('../controllers/scoreController');
+const {createGame} = require('../controllers/adminGameController');
 const { db } = require('../config/firebase');
+const { createTournament, getAllTournaments, getTournamentById } = require('../controllers/tournamentController');
 
 const router = express.Router();
 
@@ -47,6 +49,62 @@ router.get('/community/recent-activity', async (req, res) => {
     });
   }
 });
+
+// Get recent games
+router.get('/games', async (req, res) => {
+  try {
+    if (!db) {
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Database service not available' 
+      });
+    }
+    
+    const activitiesRef = db.collection('games');
+    const q = activitiesRef.limit(5);
+    const querySnapshot = await q.get();
+    
+    const games = [];
+    querySnapshot.forEach((doc) => {
+      games.push({ id: doc.id, ...doc.data() });
+    });
+    
+    res.status(200).json({
+      success: true,
+      data: games
+    });
+  } catch (error) {
+    console.error('Error fetching game:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Internal server error - games' 
+    });
+  }
+});
+
+/*
+* // Games
+* <// Under development>
+* // POST - Create a game
+*/
+router.post('/games',createGame);
+
+
+
+// </Under development>
+
+
+/*
+* // Tournaments
+* <// Under development>
+* // 
+*/
+router.post('/tournaments',createTournament);
+router.get('/tournaments',getAllTournaments);
+router.get('/tournaments/:tournamentId',getTournamentById);
+
+// </Under development>
+
 
 // Test endpoint to verify Privy client and token verification
 router.get('/test-privy', async (req, res) => {

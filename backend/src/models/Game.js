@@ -1,8 +1,9 @@
 const { db } = require('../config/firebase');
 const crypto = require('crypto');
 
+
 class Game {
-  static async createGame(gameData) {
+  static async adminCreateGame(gameData) {
     if (!db) {
       throw new Error('Database not initialized');
     }
@@ -17,14 +18,18 @@ class Game {
         .createHash('sha256')
         .update(apiKey + salt)
         .digest('hex');
+
+      const gameShortName = gameData.name.trim().toLowerCase().replace(/\s+/g,'-');
       
       const gameRef = await db.collection('games').add({
         ...gameData,
+        gameShortName: gameShortName,
         apiKey: hashedApiKey,
         createdAt: new Date()
       });
       
       const gameDoc = await gameRef.get();
+      //const gameShortName = gameDoc.data().name.trim().toLowerCase().replace(/\s+/g,'-');
       
       // Return the game data with the plain API key (only shown once)
       return { 

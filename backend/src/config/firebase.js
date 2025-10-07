@@ -1,11 +1,16 @@
 const admin = require('firebase-admin');
 const path = require('path');
 const fs = require('fs');
+require('dotenv').config({ path: '../.env' });
+
 
 let db = null;
 
 // Check if service account file exists
 let serviceAccountPath = path.join(__dirname, '..', '..', 'runner-18abe-firebase-adminsdk-fbsvc-eee2faafd9.json');
+//let serviceAccountPath = path.join(__dirname, '..', '..', 'portal-ff4e8-firebase-adminsdk-fbsvc-377993b1c8.json');
+console.log(serviceAccountPath);
+//portal-ff4e8-firebase-adminsdk-fbsvc-377993b1c8
 
 // Also check environment variable path
 const envServiceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_KEY_PATH;

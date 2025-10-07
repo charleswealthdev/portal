@@ -2,3 +2,4 @@ node_modules/
 .env
 *.log
 runner-*-firebase-adminsdk-*.json
+portal-ff4e8-firebase-adminsdk-fbsvc-377993b1c8.json
