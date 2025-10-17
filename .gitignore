@@ -7,12 +7,13 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-
 node_modules
 
 # Build outputs
 dist
 dist-ssr
+backend/dist
+backend/build
 
 # Local files
 *.local
@@ -22,11 +23,14 @@ dist-ssr
 .env
 .env.*
 env
+backend/*-firebase-adminsdk-*.json
 
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
 .idea
+.idea/*
+*.iml
 .DS_Store
 *.suo
 *.ntvs*
@@ -34,7 +38,29 @@ env
 *.sln
 *.sw?
 
+# Vercel
 .vercel
 
 # Security
 secure
+
+# Vite
+.vite
+
+# Testing
+coverage
+*.test.js.snap
+
+# Linting/Formatting
+.eslintcache
+.prettiercache
+
+# Temporary Files
+*.tmp
+*.bak
+*.swp
+*~
+
+# Windows
+Thumbs.db
+desktop.ini
