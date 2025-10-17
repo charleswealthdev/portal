@@ -63,4 +63,7 @@ coverage
 
 # Windows
 Thumbs.db
-desktop.ini
+desktop.ini.env
+*.env
+.env.*
+env
