@@ -54,11 +54,11 @@ export default defineConfig({
   },
   server: {
     headers: {
-      'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://auth.privy.io https://www.googletagmanager.com https://www.google-analytics.com; frame-src 'self' https://auth.privy.io https://wallet.privy.io https://accounts.google.com; connect-src 'self' https://auth.privy.io https://api.mainnet-beta.solana.com https://explorer-api.walletconnect.com wss://relay.walletconnect.com http://localhost:3003 http://localhost:3002 https://www.google-analytics.com https://firestore.googleapis.com; img-src 'self' data: https://*.privy.io https://lh3.googleusercontent.com https://www.googletagmanager.com https://www.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; object-src 'none'; base-uri 'self';",
+      'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://auth.privy.io https://www.googletagmanager.com https://www.google-analytics.com https://apis.google.com; frame-src 'self' https://auth.privy.io https://wallet.privy.io https://accounts.google.com; connect-src 'self' https://auth.privy.io https://api.mainnet-beta.solana.com https://explorer-api.walletconnect.com wss://relay.walletconnect.com http://localhost:3003 http://localhost:3002 https://www.google-analytics.com https://firestore.googleapis.com; img-src 'self' data: https://*.privy.io https://lh3.googleusercontent.com https://www.googletagmanager.com https://www.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; object-src 'none'; base-uri 'self';",
     },
     proxy: {
       '/api': {
-        target: 'http://localhost:3003',
+        target: 'http://localhost:3002',
         changeOrigin: true,
         secure: false,
       },
