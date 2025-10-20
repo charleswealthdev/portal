@@ -81,19 +81,16 @@ export default function Games({ onOpenModal }) {
 
     try {
       setLoading(prev => ({ ...prev, [game.id]: true }));
-      
-      // In a real implementation, you would:
-      // 1. Get the game's API key from your backend (this should NOT be in frontend code)
-      // 2. Pass the user's access token and API key to the game
-      // 3. Redirect to the game with authentication parameters
-      
-      // For demo purposes, we'll just open the game URL
-      // In a production environment, you would securely pass the accessToken to the game
+
+      // Pass authentication parameters to the game URL
+      // Note: API key is server-side only for security - games must be configured with their API key
+      const gameUrl = `${game.url}?token=${encodeURIComponent(accessToken)}&gameId=${encodeURIComponent(game.id)}&userId=${encodeURIComponent(user.id)}`;
+
       console.log('Launching game:', game.name);
-      console.log('User authenticated with token:', accessToken?.substring(0, 20) + '...');
-      
-      // Open the game in a new tab
-      window.open(game.url, '_blank');
+      console.log('Game URL with auth params:', gameUrl.substring(0, 100) + '...');
+
+      // Open the game in a new tab with authentication parameters
+      window.open(gameUrl, '_blank');
     } catch (error) {
       console.error('Error launching game:', error);
     } finally {
