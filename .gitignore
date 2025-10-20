@@ -60,7 +60,7 @@ coverage
 *.bak
 *.swp
 *~
-
+  
 # Windows
 Thumbs.db
 desktop.ini.env
