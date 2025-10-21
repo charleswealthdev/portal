@@ -4,8 +4,6 @@ const Game = require('../models/Game');
 // Middleware to verify Privy token
 async function verifyPrivyToken(req, res, next) {
   try {
-    const { privy } = require('../config/privy');
-
     if (!privy) {
       console.error('Privy client not initialized');
       return res.status(500).json({ error: 'Authentication service not available' });
