@@ -34,23 +34,47 @@ class Leaderboard {
       throw new Error('Database not initialized');
     }
 
-    const scoresRef = db.collection('gameScores');
-    const query = scoresRef.where('gameId', '==', gameId).orderBy('score', 'desc').limit(limit);
-    const querySnapshot = await query.get();
+    try {
+      const scoresRef = db.collection('gameScores');
+      const query = scoresRef.where('gameId', '==', gameId).orderBy('score', 'desc').limit(limit);
+      const querySnapshot = await query.get();
 
-    const leaderboard = [];
-    let rank = 1;
-    querySnapshot.forEach((doc) => {
-      const data = doc.data();
-      leaderboard.push({
-        userId: data.userId,
-        displayName: data.userData.displayName || 'Anonymous Player',
-        score: data.score,
-        rank: rank++
+      const leaderboard = [];
+      let rank = 1;
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        leaderboard.push({
+          userId: data.userId,
+          displayName: data.userData.displayName || 'Anonymous Player',
+          score: data.score,
+          rank: rank++
+        });
       });
-    });
 
-    return leaderboard;
+      return leaderboard;
+    } catch (error) {
+      // If index error, fall back to simpler query without ordering
+      if (error.code === 9 && error.message.includes('requires an index')) {
+        console.warn('Firestore index required for ordered query, falling back to unordered results');
+        const scoresRef = db.collection('gameScores');
+        const fallbackQuery = scoresRef.where('gameId', '==', gameId).limit(limit);
+        const fallbackSnapshot = await fallbackQuery.get();
+
+        const leaderboard = [];
+        fallbackSnapshot.forEach((doc) => {
+          const data = doc.data();
+          leaderboard.push({
+            userId: data.userId,
+            displayName: data.userData.displayName || 'Anonymous Player',
+            score: data.score,
+            rank: 0 // No ranking without ordering
+          });
+        });
+
+        return leaderboard;
+      }
+      throw error;
+    }
   }
 
   static async getUserRankInGame(gameId, userId) {
