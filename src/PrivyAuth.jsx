@@ -1,12 +1,16 @@
 import { createContext, useContext, useEffect, useState, useMemo } from 'react';
 import { PrivyProvider, usePrivy } from '@privy-io/react-auth';
 
+// Constants
+const PRIVY_APP_ID_ERROR = 'Invalid Privy App ID. Please check your .env file.';
+const PRIVY_LOADING_TEXT = 'Initializing Wallet...';
+
 // Loading screen during wallet initialization
 const PrivyLoading = () => (
   <div className="min-h-screen bg-black flex items-center justify-center">
     <div className="text-center">
       <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-neon-blue mx-auto mb-4"></div>
-      <p className="text-white text-xl font-orbitron">Initializing Wallet...</p>
+      <p className="text-white text-xl font-orbitron">{PRIVY_LOADING_TEXT}</p>
       <p className="text-gray-400 text-sm mt-2">Connecting to Solana network</p>
     </div>
   </div>
@@ -45,24 +49,27 @@ export const AuthProvider = ({ children }) => {
       return;
     }
 
-    getAccessToken()
-      .then((token) => {
+    const fetchAccessToken = async () => {
+      try {
+        const token = await getAccessToken();
         setAuthState({
           user,
           loading: false,
           authenticated: true,
           accessToken: token ?? null,
         });
-      })
-      .catch((err) => {
-        console.error('Error getting access token:', err);
+      } catch (error) {
+        console.error('Error getting access token:', error);
         setAuthState({
           user,
           loading: false,
           authenticated: true,
           accessToken: null,
         });
-      });
+      }
+    };
+
+    fetchAccessToken();
   }, [ready, authenticated, user, getAccessToken]);
 
   if (authState.loading) return <PrivyLoading />;
@@ -79,14 +86,12 @@ export const PrivyAuthProvider = ({ children }) => {
 
   // Fail-fast if APP ID is not valid
   if (!privyAppId || typeof privyAppId !== 'string' || privyAppId.trim().length < 10) {
-    console.error('Invalid Privy App ID. Please check your .env file.');
+    console.error(PRIVY_APP_ID_ERROR);
     return (
       <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
         <div className="text-center max-w-md">
           <h1 className="text-2xl font-bold text-red-500 mb-4">Configuration Error</h1>
-          <p className="text-gray-300 mb-4">
-            Invalid Privy App ID. Please check your environment configuration.
-          </p>
+          <p className="text-gray-300 mb-4">{PRIVY_APP_ID_ERROR}</p>
           <p className="text-sm text-gray-500">
             Make sure VITE_PRIVY_APP_ID is properly set in your .env file.
           </p>
@@ -94,7 +99,6 @@ export const PrivyAuthProvider = ({ children }) => {
       </div>
     );
   }
-
 
   // Base config (Solana only + Google)
   const privyConfig = useMemo(() => ({
