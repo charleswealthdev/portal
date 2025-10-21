@@ -112,15 +112,6 @@ export const PrivyAuthProvider = ({ children }) => {
       createOnLogin: 'off',
     },
     loginMethods: ['wallet', 'google'],
-    // Configure external wallets - Solana only
-    externalWallets: {
-      solanaClusters: [
-        {
-          name: 'mainnet-beta',
-          rpcUrl: 'https://api.mainnet-beta.solana.com',
-        },
-      ],
-    },
     walletConnect: {
       // Disable all Ethereum wallets, only allow Solana
       excludeWalletIds: [
