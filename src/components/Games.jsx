@@ -35,7 +35,7 @@ const gamesData = [
     name: 'Solflare Defender', 
     url: 'https://solflaredefender.playrush.io', 
     description: 'Defend the Solflare network.',
-    icon: '🛡️',
+    icon: '🛡',
     players: '1.5k',
     status: 'Live'
   },
@@ -63,7 +63,7 @@ export default function Games({ onOpenModal }) {
   const [search, setSearch] = useState('');
   const [games, setGames] = useState(gamesData);
   const [loading, setLoading] = useState({});
-  const { authenticated, accessToken } = useAuth();
+  const { authenticated, accessToken, user } = useAuth();
   
   // Filter games based on search term
   const filteredGames = games.filter(game => 
