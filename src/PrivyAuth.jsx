@@ -110,9 +110,7 @@ export const PrivyAuthProvider = ({ children }) => {
     loginMethods: ['wallet', 'google'],
     // Configure external wallets
     externalWallets: {
-      solana: {
-        connectors: ['phantom', 'solflare'],
-      },
+      solana: {},
     },
     walletConnect: {
       // Disable Coinbase Smart Wallet for Solana compatibility
