@@ -55,14 +55,36 @@ async function registerUser(userId, userData) {
   }
 }
 
-async function loadGameData() {
-  // This function would typically fetch user-specific game data
-  // For now, we'll return mock data
-  return {
-    highScore: 0,
-    timesPlayed: 0,
-    totalCoinsClaimed: 0
-  };
+async function loadGameData(userId) {
+  if (!userId) {
+    throw new Error('User ID required to load game data');
+  }
+
+  try {
+    const userRef = doc(db, 'users', userId);
+    const userDoc = await getDoc(userRef);
+
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      return {
+        highScore: userData.highScore || 0,
+        timesPlayed: userData.timesPlayed || 0,
+        totalCoinsClaimed: userData.totalCoinsClaimed || 0,
+        totalScore: userData.totalScore || 0
+      };
+    } else {
+      // Return default data for new users
+      return {
+        highScore: 0,
+        timesPlayed: 0,
+        totalCoinsClaimed: 0,
+        totalScore: 0
+      };
+    }
+  } catch (error) {
+    console.error('Error loading game data:', error);
+    throw error;
+  }
 }
 
 async function updateProfile(user, profileData) {
