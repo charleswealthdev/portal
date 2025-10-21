@@ -96,7 +96,7 @@ export const PrivyAuthProvider = ({ children }) => {
   }
 
 
-  // Base config (Solana + embedded wallet + Google)
+  // Base config (Solana only + Google)
   const privyConfig = useMemo(() => ({
     appearance: {
       theme: 'dark',
@@ -108,13 +108,24 @@ export const PrivyAuthProvider = ({ children }) => {
       createOnLogin: 'off',
     },
     loginMethods: ['wallet', 'google'],
-    // Configure external wallets
+    // Configure external wallets - Solana only
     externalWallets: {
-      solana: {},
+      solana: {
+        connectors: {
+          phantom: {},
+          solflare: {},
+        },
+      },
     },
     walletConnect: {
-      // Disable Coinbase Smart Wallet for Solana compatibility
-      excludeWalletIds: ['c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96d'],
+      // Disable all Ethereum wallets, only allow Solana
+      excludeWalletIds: [
+        'c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96d', // Coinbase
+        'c03dfee351b6fccf3fb0', // MetaMask
+        '767fc0f6-0d3a-4a92-8b4b-5a0b0e2d3f3a', // Trust Wallet
+        '4622a2b2d6af1c9844944291e5e7351a6aa24cd7', // Ledger
+        '19177a98252e07ddfc9af2083ba42e07ebf564791', // WalletConnect
+      ],
     },
   }), []);
 
