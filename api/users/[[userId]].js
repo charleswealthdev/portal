@@ -18,23 +18,13 @@ export default async function handler(request, response) {
     
     const token = authHeader.substring(7);
     
-    // Mock request object for middleware
-    const mockReq = {
-      headers: {
-        authorization: authHeader
-      },
-      user: {}
-    };
-    
-    const mockRes = {
-      status: (code) => ({
-        json: (data) => response.status(code).json(data)
-      })
-    };
-    
-    // Verify token (this would normally be done with middleware)
-    // For now, we'll skip actual verification in serverless functions
-    // and just pass the request to the controller
+    // Verify Privy token
+    try {
+      const decodedToken = await verifyPrivyToken(token);
+      // Token is valid, proceed
+    } catch (error) {
+      return response.status(401).json({ error: 'Invalid or expired token' });
+    }
     
     // Call the controller function directly
     await getUserProfile(
