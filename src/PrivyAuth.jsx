@@ -111,10 +111,7 @@ export const PrivyAuthProvider = ({ children }) => {
     // Configure external wallets
     externalWallets: {
       solana: {
-        connectors: {
-          phantom: {},
-          solflare: {},
-        },
+        connectors: ['phantom', 'solflare'],
       },
     },
     walletConnect: {
