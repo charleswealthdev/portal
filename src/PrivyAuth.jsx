@@ -1,136 +1,93 @@
-import { createContext, useContext, useEffect, useState, useMemo } from 'react';
-import { PrivyProvider, usePrivy } from '@privy-io/react-auth';
+const { privy } = require('../config/privy');
+const Game = require('../models/Game');
 
-// Constants
-const PRIVY_APP_ID_ERROR = 'Invalid Privy App ID. Please check your .env file.';
-const PRIVY_LOADING_TEXT = 'Initializing Wallet...';
-
-// Loading screen during wallet initialization
-const PrivyLoading = () => (
-  <div className="min-h-screen bg-black flex items-center justify-center">
-    <div className="text-center">
-      <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-neon-blue mx-auto mb-4"></div>
-      <p className="text-white text-xl font-orbitron">{PRIVY_LOADING_TEXT}</p>
-      <p className="text-gray-400 text-sm mt-2">Connecting to Solana network</p>
-    </div>
-  </div>
-);
-
-const AuthContext = createContext(undefined);
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used within an AuthProvider');
-  return context;
-};
-
-export const AuthProvider = ({ children }) => {
-  const { ready, authenticated, user, logout, getAccessToken } = usePrivy();
-  const [authState, setAuthState] = useState({
-    user: null,
-    loading: true,
-    authenticated: false,
-    accessToken: null,
-  });
-
-  useEffect(() => {
-    if (!ready) return;
-
-    const setLoggedOut = () =>
-      setAuthState({
-        user: null,
-        loading: false,
-        authenticated: false,
-        accessToken: null,
-      });
-
-    if (!authenticated || !user) {
-      setLoggedOut();
-      return;
+// Middleware to verify Privy token
+async function verifyPrivyToken(req, res, next) {
+  try {
+    if (!privy) {
+      console.error('Privy client not initialized');
+      return res.status(500).json({ error: 'Authentication service not available' });
     }
 
-    const fetchAccessToken = async () => {
-      try {
-        const token = await getAccessToken();
-        setAuthState({
-          user,
-          loading: false,
-          authenticated: true,
-          accessToken: token ?? null,
-        });
-      } catch (error) {
-        console.error('Error getting access token:', error);
-        setAuthState({
-          user,
-          loading: false,
-          authenticated: true,
-          accessToken: null,
-        });
-      }
+    // Get token from Authorization header
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Missing or invalid authorization header' });
+    }
+
+    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+
+    // Verify the token with Privy
+    const payload = await privy.verifyAuthToken(token);
+
+    if (!payload) {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+
+    // Attach user info to request
+    req.user = {
+      userId: payload.userId || payload.sub,
+      id: payload.userId || payload.sub,
+      ...payload
     };
 
-    fetchAccessToken();
-  }, [ready, authenticated, user, getAccessToken]);
-
-  if (authState.loading) return <PrivyLoading />;
-
-  return (
-    <AuthContext.Provider value={{ ...authState, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
-};
-
-export const PrivyAuthProvider = ({ children }) => {
-  const privyAppId = import.meta.env.VITE_PRIVY_APP_ID;
-
-  // Fail-fast if APP ID is not valid
-  if (!privyAppId || typeof privyAppId !== 'string' || privyAppId.trim().length < 10) {
-    console.error(PRIVY_APP_ID_ERROR);
-    return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
-        <div className="text-center max-w-md">
-          <h1 className="text-2xl font-bold text-red-500 mb-4">Configuration Error</h1>
-          <p className="text-gray-300 mb-4">{PRIVY_APP_ID_ERROR}</p>
-          <p className="text-sm text-gray-500">
-            Make sure VITE_PRIVY_APP_ID is properly set in your .env file.
-          </p>
-        </div>
-      </div>
-    );
+    console.log('Privy token verified for user:', req.user.userId);
+    next();
+  } catch (error) {
+    console.error('Privy token verification failed:', error);
+    return res.status(401).json({ error: 'Authentication failed' });
   }
+}
 
-  // Base config (Solana only + Google)
-  const privyConfig = useMemo(() => ({
-    appearance: {
-      theme: 'dark',
-      accentColor: '#676FFF',
-      logo: '/assets/playrush-logo.png',
-    },
-    // Disable embedded wallets
-    embeddedWallets: {
-      createOnLogin: 'off',
-    },
-    loginMethods: ['wallet', 'google'],
-    walletConnect: {
-      // Disable all Ethereum wallets, only allow Solana
-      excludeWalletIds: [
-        'c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96d', // Coinbase
-        'c03dfee351b6fccf3fb0', // MetaMask
-        '767fc0f6-0d3a-4a92-8b4b-5a0b0e2d3f3a', // Trust Wallet
-        '4622a2b2d6af1c9844944291e5e7351a6aa24cd7', // Ledger
-        '19177a98252e07ddfc9af2083ba42e07ebf564791', // WalletConnect
-      ],
-    },
-  }), []);
+// Middleware to verify game API key
+async function verifyApiKey(req, res, next) {
+  try {
+    const apiKey = req.headers['x-api-key'];
+    const { gameId } = req.body;
+    
+    if (!apiKey) {
+      return res.status(401).json({ error: 'Missing API key' });
+    }
+    
+    if (!gameId) {
+      return res.status(400).json({ error: 'Missing gameId in request body' });
+    }
+    
+    // Verify API key
+    const isValid = await Game.verifyApiKey(gameId, apiKey);
+    
+    if (!isValid) {
+      return res.status(403).json({ error: 'Invalid API key' });
+    }
+    
+    next();
+  } catch (error) {
+    console.error('Error verifying API key:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+}
 
-  // Visibility for runtime verification
-  console.log('Privy App ID:', privyAppId);
-  console.log('Privy Config:', privyConfig);
+// Middleware to validate score data
+function validateScore(req, res, next) {
+  const { gameId, score } = req.body;
+  
+  if (!gameId) {
+    return res.status(400).json({ error: 'Missing gameId' });
+  }
+  
+  if (score === undefined || score === null) {
+    return res.status(400).json({ error: 'Missing score' });
+  }
+  
+  if (!Number.isInteger(score) || score < 0) {
+    return res.status(400).json({ error: 'Score must be a non-negative integer' });
+  }
+  
+  next();
+}
 
-  return (
-    <PrivyProvider appId={privyAppId} config={privyConfig}>
-      <AuthProvider>{children}</AuthProvider>
-    </PrivyProvider>
-  );
+module.exports = {
+  verifyPrivyToken,
+  verifyApiKey,
+  validateScore
 };
