@@ -9,7 +9,7 @@ import {
 import { clusterApiUrl } from '@solana/web3.js';
 
 // --- Styles for wallet modal ---
-require('@solana/wallet-adapter-react-ui/styles.css');
+import '@solana/wallet-adapter-react-ui/styles.css';
 
 // Constants
 const PRIVY_APP_ID_ERROR = 'Invalid Privy App ID. Please check your .env file.';
