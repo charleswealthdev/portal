@@ -1,4 +1,4 @@
-import { verifyPrivyToken } from '../../backend/src/middleware/auth';
+import { verifyWalletToken } from '../../backend/src/middleware/walletAuth';
 import { getUserProfile } from '../../backend/src/controllers/scoreController';
 
 export default async function handler(request, response) {
@@ -9,23 +9,23 @@ export default async function handler(request, response) {
   try {
     // Extract user ID from the request
     const userId = request.query.userId;
-    
+
     // Verify token
     const authHeader = request.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return response.status(401).json({ error: 'Missing or invalid authorization header' });
     }
-    
+
     const token = authHeader.substring(7);
-    
-    // Verify Privy token
+
+    // Verify wallet token
     try {
-      const decodedToken = await verifyPrivyToken(token);
+      const decodedToken = await verifyWalletToken(token);
       // Token is valid, proceed
     } catch (error) {
       return response.status(401).json({ error: 'Invalid or expired token' });
     }
-    
+
     // Call the controller function directly
     await getUserProfile(
       { params: { userId }, user: { id: userId } },
