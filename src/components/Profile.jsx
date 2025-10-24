@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useAuth } from '../PrivyAuth';
+import { useAuth } from '../WalletAuth';
 import { fetchUserProfile, updateProfileOnBackend } from '../api';
 
 export default function Profile({ onOpenModal }) {
