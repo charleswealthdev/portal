@@ -4,10 +4,9 @@ require('dotenv').config();
 
 // Import configurations
 const { db } = require('./config/firebase');
-const { privy } = require('./config/privy');
 
 // Import routes
-const apiRoutes = require('./routes/api');
+const apiRoutes = require('./routes/walletApi');
 
 const app = express();
 const PORT = process.env.PORT || 3002; // Changed from 3001 to 3002
@@ -27,7 +26,7 @@ app.use(express.json());
 
 // Routes
 app.get('/', (req, res) => {
-  res.json({ 
+  res.json({
     message: 'Playrush Backend Server',
     status: 'running',
     timestamp: new Date().toISOString()
@@ -37,12 +36,11 @@ app.get('/', (req, res) => {
 // Health check endpoint
 app.get('/health', (req, res) => {
   const firebaseStatus = db ? 'connected' : 'disconnected';
-  const privyStatus = privy ? 'connected' : 'disconnected';
-  res.json({ 
+  res.json({
     status: 'healthy',
     services: {
       firebase: firebaseStatus,
-      privy: privyStatus
+      walletAuth: 'enabled'
     },
     timestamp: new Date().toISOString()
   });
