@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import { WalletAuthProvider } from './WalletAuth';
 import Header from './components/Header';
 import Games from './components/Games';
 import Community from './components/Community';
@@ -76,21 +77,23 @@ export default function App() {
   }, []);
 
   return (
-    <Router>
-      <div className="bg-[#0A0A0A] text-white min-h-screen relative font-orbitron">
-        <Header onOpenModal={() => setIsModalOpen(true)} />
-        <div className="pb-16 sm:pb-0 pt-16">
-          <Routes>
-            <Route path="/" element={<Games onOpenModal={() => setIsModalOpen(true)} />} />
-            <Route path="/games" element={<Games onOpenModal={() => setIsModalOpen(true)} />} />
-            <Route path="/community" element={<Community onOpenModal={() => setIsModalOpen(true)} />} />
-            <Route path="/profile" element={<Profile onOpenModal={() => setIsModalOpen(true)} />} />
-            <Route path="/leaderboard" element={<Leaderboard onOpenModal={() => setIsModalOpen(true)} />} />
-          </Routes>
+    <WalletAuthProvider>
+      <Router>
+        <div className="bg-[#0A0A0A] text-white min-h-screen relative font-orbitron">
+          <Header />
+          <div className="pb-16 sm:pb-0 pt-16">
+            <Routes>
+              <Route path="/" element={<Games />} />
+              <Route path="/games" element={<Games />} />
+              <Route path="/community" element={<Community />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/leaderboard" element={<Leaderboard />} />
+            </Routes>
+          </div>
+          <BottomNav />
+          <SignInModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
         </div>
-        <BottomNav />
-        <SignInModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
-      </div>
-    </Router>
+      </Router>
+    </WalletAuthProvider>
   );
 }
