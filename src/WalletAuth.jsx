@@ -17,7 +17,7 @@ export const useAuth = () => {
   return context;
 };
 
-// Loading screen
+// Loading screen - only show when connecting wallet
 const WalletLoading = () => (
   <div className="min-h-screen bg-black flex items-center justify-center">
     <div className="text-center">
@@ -33,7 +33,7 @@ export const AuthProvider = ({ children }) => {
   const { publicKey, connected, signMessage, disconnect } = useWallet();
   const [authState, setAuthState] = useState({
     user: null,
-    loading: true,
+    loading: false, // Changed to false - only load when connecting
     authenticated: false,
     walletAddress: null,
   });
@@ -101,6 +101,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Show loading only when connecting wallet
   if (authState.loading) return <WalletLoading />;
 
   return (
