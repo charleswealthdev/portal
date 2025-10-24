@@ -1,18 +1,22 @@
 
-import { useState } from 'react';
-import { useAuth } from '../PrivyAuth';
+import { useAuth } from '../WalletAuth';
 import { Link } from 'react-router-dom';
+import { CustomWalletButton } from '../WalletAuth';
 
-export default function Header({ onOpenModal }) {
-  const { authenticated, user, logout } = useAuth();
-  const [walletAddress, setWalletAddress] = useState(null);
+export default function Header() {
+  const { authenticated, walletAddress, signOut } = useAuth();
 
   const handleSignOut = async () => {
     try {
-      await logout();
+      await signOut();
     } catch (err) {
       console.error('Sign out error:', err);
     }
+  };
+
+  const shortenAddress = (address) => {
+    if (!address) return '';
+    return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
   };
 
   return (
@@ -28,21 +32,17 @@ export default function Header({ onOpenModal }) {
           <Link to="/profile" className="text-white hover:text-[#ff006e] transition">Profile</Link>
         </div>
         <div>
-          {authenticated && user ? (
+          {authenticated && walletAddress ? (
             <div className="flex items-center space-x-4">
               <span className="text-[#3a86ff]">
-                {user.google?.name || user.wallet?.address ? 
-                 (user.google?.name || `${user.wallet?.address?.substring(0, 6)}...${user.wallet?.address?.substring(user.wallet?.address?.length - 4)}`) : 
-                 'Player'}
+                {shortenAddress(walletAddress)}
               </span>
               <button onClick={handleSignOut} className="bg-[#ff006e] text-white px-4 py-1 rounded hover:bg-[#8338ec] transition">
-                Sign Out
+                Disconnect
               </button>
             </div>
           ) : (
-            <button onClick={onOpenModal} className="bg-gradient-to-r from-[#ff006e] to-[#8338ec] text-white px-4 py-1 rounded hover:shadow-lg transition">
-              Sign In
-            </button>
+            <CustomWalletButton />
           )}
         </div>
       </nav>
