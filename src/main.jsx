@@ -2,7 +2,7 @@ import React, { Suspense } from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
 import './index.css';
-import { PrivyAuthProvider } from './PrivyAuth.jsx';
+import { WalletAuthProvider } from './WalletAuth.jsx';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -57,9 +57,9 @@ const LoadingSpinner = () => (
 ReactDOM.createRoot(document.getElementById('root')).render(
   <ErrorBoundary>
     <Suspense fallback={<LoadingSpinner />}>
-      <PrivyAuthProvider>
+      <WalletAuthProvider>
         <App />
-      </PrivyAuthProvider>
+      </WalletAuthProvider>
     </Suspense>
   </ErrorBoundary>
 );
