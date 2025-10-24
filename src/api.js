@@ -1,6 +1,6 @@
 // Utility functions for API calls to the Playrush backend
 
-import { useAuth } from './PrivyAuth';
+import { useAuth } from './WalletAuth';
 import { loadGameData } from './firebase';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
