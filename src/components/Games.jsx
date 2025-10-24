@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../PrivyAuth';
+import { useAuth } from '../WalletAuth';
 
 // Game data - in a production implementation, this would come from your backend
 const gamesData = [
@@ -35,7 +35,7 @@ const gamesData = [
     name: 'Solflare Defender', 
     url: 'https://solflaredefender.playrush.io', 
     description: 'Defend the Solflare network.',
-    icon: '🛡',
+    icon: '🛡️',
     players: '1.5k',
     status: 'Live'
   },
