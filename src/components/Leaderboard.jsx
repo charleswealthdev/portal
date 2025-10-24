@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useAuth } from '../PrivyAuth';
+import { useAuth } from '../WalletAuth';
 import { fetchGlobalLeaderboard, fetchGameLeaderboard } from '../api';
 
 export default function Leaderboard({ onOpenModal }) {
