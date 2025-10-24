@@ -1,6 +1,6 @@
 // src/components/Community.jsx (Enhanced: Daily login, community tasks, social leaderboard, improved UI/UX)
 import { useEffect, useState } from 'react';
-import { useAuth } from '../PrivyAuth';
+import { useAuth } from '../WalletAuth';
 import { getRecentActivity, loadGameData } from '../firebase';
 
 export default function Community({ onOpenModal }) {
