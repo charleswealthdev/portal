@@ -2,7 +2,7 @@ const { verifyWalletToken } = require('../config/walletAuth');
 const Game = require('../models/Game');
 
 // Middleware to verify wallet token
-async function verifyPrivyToken(req, res, next) {
+async function verifyWalletToken(req, res, next) {
   try {
     // Get token from Authorization header
     const authHeader = req.headers.authorization;
@@ -82,7 +82,7 @@ function validateScore(req, res, next) {
 }
 
 module.exports = {
-  verifyPrivyToken,
+  verifyWalletToken,
   verifyApiKey,
   validateScore
 };
