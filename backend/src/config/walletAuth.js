@@ -3,14 +3,21 @@
 
 const jwt = require('jsonwebtoken');
 
-// Function to verify wallet signature (for future use)
-function verifyWalletSignature(message, signature, publicKey) {
-  // This would verify the signature using Solana web3.js
-  // For now, we'll implement basic JWT-based auth for wallet addresses
+// Function to verify wallet signature using Solana web3.js
+async function verifyWalletSignature(message, signature, publicKey) {
   try {
-    // In a real implementation, you'd verify the signature here
-    // For now, we'll just return true for connected wallets
-    return true;
+    const { PublicKey } = require('@solana/web3.js');
+    const nacl = require('tweetnacl');
+
+    // Convert inputs to proper format
+    const messageBytes = new TextEncoder().encode(message);
+    const signatureBytes = Uint8Array.from(Buffer.from(signature, 'hex'));
+    const publicKeyBytes = new PublicKey(publicKey).toBytes();
+
+    // Verify the signature
+    const isValid = nacl.sign.detached.verify(messageBytes, signatureBytes, publicKeyBytes);
+
+    return isValid;
   } catch (error) {
     console.error('Wallet signature verification failed:', error);
     return false;
