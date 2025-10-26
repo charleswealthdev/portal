@@ -3,7 +3,7 @@ import { useAuth } from '../WalletAuth';
 import { fetchUserProfile, updateProfileOnBackend } from '../api';
 
 export default function Profile({ onOpenModal }) {
-  const { user, loading, authenticated, accessToken, logout } = useAuth();
+  const { user, loading, authenticated, walletAddress, signMessage, logout } = useAuth();
   const [profile, setProfile] = useState(null);
   const [displayName, setDisplayName] = useState('');
   const [error, setError] = useState(null);
@@ -13,12 +13,12 @@ export default function Profile({ onOpenModal }) {
 
   useEffect(() => {
     async function fetchProfile() {
-      if (authenticated && user && accessToken) {
+      if (authenticated && user && walletAddress && signMessage) {
         try {
           setError(null);
           // Fetch user profile from backend
-          const profileData = await fetchUserProfile(user.id, accessToken);
-          
+          const profileData = await fetchUserProfile(user.id, walletAddress, signMessage);
+
           setProfile(profileData.data);
           setDisplayName(profileData.data.displayName ||
                        user.google?.name ||
@@ -31,7 +31,7 @@ export default function Profile({ onOpenModal }) {
       }
     }
     fetchProfile();
-  }, [authenticated, user, accessToken]);
+  }, [authenticated, user, walletAddress, signMessage]);
 
   const validateDisplayName = (name) => {
     const isValidName = name.length >= 3 && name.length <= 20;
@@ -40,7 +40,7 @@ export default function Profile({ onOpenModal }) {
   };
 
   const handleUpdateProfile = async () => {
-    if (!authenticated || !user || !accessToken) {
+    if (!authenticated || !user || !walletAddress || !signMessage) {
       setError('You must be logged in to update your profile');
       return;
     }
@@ -58,14 +58,15 @@ export default function Profile({ onOpenModal }) {
       setSaving(true);
       setError(null);
       setSuccess(null);
-      
+
       // Update user profile on backend
       const updatedProfile = await updateProfileOnBackend(
         user.id,
         { displayName },
-        accessToken
+        walletAddress,
+        signMessage
       );
-      
+
       setProfile(updatedProfile.data);
       setSuccess('Profile updated successfully!');
     } catch (err) {
