@@ -1,5 +1,5 @@
-import { verifyWalletToken } from '../../backend/src/middleware/walletAuth';
-import { getUserProfile } from '../../backend/src/controllers/scoreController';
+import { verifyWalletAuth } from '../../../backend/src/middleware/auth';
+import { getUserProfile } from '../../../backend/src/controllers/scoreController';
 
 export default async function handler(request, response) {
   if (request.method !== 'GET') {
@@ -10,25 +10,47 @@ export default async function handler(request, response) {
     // Extract user ID from the request
     const userId = request.query.userId;
 
-    // Verify token
-    const authHeader = request.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return response.status(401).json({ error: 'Missing or invalid authorization header' });
+    // Verify wallet signature
+    const walletAddress = request.headers['x-wallet-address'];
+    const signature = request.headers['x-signature'];
+    const message = request.headers['x-message'];
+
+    if (!walletAddress || !signature || !message) {
+      return response.status(401).json({ error: 'Missing wallet authentication data' });
     }
 
-    const token = authHeader.substring(7);
+    // Create a mock request object for the middleware
+    const mockReq = {
+      headers: {
+        'x-wallet-address': walletAddress,
+        'x-signature': signature,
+        'x-message': message
+      }
+    };
 
-    // Verify wallet token
-    try {
-      const decodedToken = await verifyWalletToken(token);
-      // Token is valid, proceed
-    } catch (error) {
-      return response.status(401).json({ error: 'Invalid or expired token' });
+    const mockRes = {
+      status: (code) => ({
+        json: (data) => {
+          response.status(code).json(data);
+          return { json: () => {} };
+        }
+      })
+    };
+
+    let nextCalled = false;
+    const next = () => { nextCalled = true; };
+
+    // Verify wallet signature using middleware
+    await verifyWalletAuth(mockReq, mockRes, next);
+
+    if (!nextCalled) {
+      // Authentication failed, response already sent by middleware
+      return;
     }
 
     // Call the controller function directly
     await getUserProfile(
-      { params: { userId }, user: { id: userId } },
+      { params: { userId }, user: mockReq.user },
       {
         status: (code) => ({
           json: (data) => {
