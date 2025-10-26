@@ -20,9 +20,9 @@ export default function Profile({ onOpenModal }) {
           const profileData = await fetchUserProfile(user.id, accessToken);
           
           setProfile(profileData.data);
-          setDisplayName(profileData.data.displayName || 
-                       user.google?.name || 
-                       user.wallet?.address || 
+          setDisplayName(profileData.data.displayName ||
+                       user.google?.name ||
+                       user.walletAddress ||
                        'Anonymous Player');
         } catch (err) {
           console.error('Failed to load profile:', err);
@@ -131,24 +131,24 @@ export default function Profile({ onOpenModal }) {
               <div className="flex flex-col items-center mb-6">
                 <div className="w-24 h-24 rounded-full bg-[#8338ec]/20 flex items-center justify-center mb-4">
                   <span className="text-3xl font-orbitron">
-                    {profile?.displayName?.charAt(0)?.toUpperCase() || 
-                     user?.google?.name?.charAt(0)?.toUpperCase() || 
-                     user?.wallet?.address?.charAt(0)?.toUpperCase() || 'P'}
+                    {profile?.displayName?.charAt(0)?.toUpperCase() ||
+                     user?.google?.name?.charAt(0)?.toUpperCase() ||
+                     user?.walletAddress?.charAt(0)?.toUpperCase() || 'P'}
                   </span>
                 </div>
                 <h2 className="text-xl font-orbitron font-bold">
-                  {profile?.displayName || 
-                   user?.google?.name || 
-                   (user?.wallet?.address ? 
-                    `${user.wallet.address.substring(0, 6)}...${user.wallet.address.substring(user.wallet.address.length - 4)}` : 
+                  {profile?.displayName ||
+                   user?.google?.name ||
+                   (user?.walletAddress ?
+                    `${user.walletAddress.substring(0, 6)}...${user.walletAddress.substring(user.walletAddress.length - 4)}` :
                     'Anonymous Player')}
                 </h2>
                 {user?.google?.email && (
                   <p className="text-gray-400 text-sm mt-1">{user.google.email}</p>
                 )}
-                {user?.wallet?.address && (
+                {user?.walletAddress && (
                   <p className="text-gray-400 text-sm mt-1">
-                    Wallet: {user.wallet.address.substring(0, 6)}...{user.wallet.address.substring(user.wallet.address.length - 4)}
+                    Wallet: {user.walletAddress.substring(0, 6)}...{user.walletAddress.substring(user.walletAddress.length - 4)}
                   </p>
                 )}
               </div>
@@ -250,10 +250,10 @@ export default function Profile({ onOpenModal }) {
                   </div>
                 )}
                 
-                {user?.wallet && (
+                {user?.walletAddress && (
                   <div>
                     <p className="text-gray-400 text-sm">Wallet Address</p>
-                    <p className="font-mono text-sm break-all">{user.wallet.address}</p>
+                    <p className="font-mono text-sm break-all">{user.walletAddress}</p>
                   </div>
                 )}
                 
