@@ -7,11 +7,11 @@ async function submitScore(req, res) {
   try {
     // Extract data from request
     const { gameId, score, userData } = req.body;
-    // Extract userId from Privy token payload
-    const userId = req.user.userId || req.user.id;
+    // Extract userId from wallet token payload
+    const userId = req.user.walletAddress || req.user.id;
 
     // Get user data
-    let user = await User.getUserByDid(userId);
+    let user = await User.getUserByWalletAddress(userId);
     if (!user) {
       // Create user if not found, using provided userData or default
       user = await User.createUser(userId, userData || {});
@@ -66,8 +66,8 @@ async function submitScore(req, res) {
 async function getUserProfile(req, res) {
   try {
     const { userId } = req.params;
-    // Extract requesting user ID from Privy token payload (if authenticated)
-    const requestingUserId = req.user ? (req.user.userId || req.user.id) : userId;
+    // Extract requesting user ID from wallet token payload (if authenticated)
+    const requestingUserId = req.user ? (req.user.walletAddress || req.user.id) : userId;
 
     // Check if user is requesting their own data (skip if not authenticated)
     if (req.user && userId !== requestingUserId) {
@@ -78,7 +78,7 @@ async function getUserProfile(req, res) {
     }
 
     // Get user data
-    let user = await User.getUserByDid(userId);
+    let user = await User.getUserByWalletAddress(userId);
     if (!user) {
       // Create user if not found
       user = await User.createUser(userId, { displayName: 'Anonymous Player' });
@@ -123,8 +123,8 @@ async function getUserProfile(req, res) {
 async function updateUserProfile(req, res) {
   try {
     const { userId } = req.params;
-    // Extract requesting user ID from Privy token payload (if authenticated)
-    const requestingUserId = req.user ? (req.user.userId || req.user.id) : userId;
+    // Extract requesting user ID from wallet token payload (if authenticated)
+    const requestingUserId = req.user ? (req.user.walletAddress || req.user.id) : userId;
     const { displayName } = req.body;
 
     // Check if user is updating their own data (skip if not authenticated)
@@ -144,7 +144,7 @@ async function updateUserProfile(req, res) {
     }
 
     // Check if user exists, create if not
-    let user = await User.getUserByDid(userId);
+    let user = await User.getUserByWalletAddress(userId);
     if (!user) {
       user = await User.createUser(userId, { displayName });
     }
@@ -184,7 +184,7 @@ async function updateUserProfile(req, res) {
 async function getGlobalLeaderboard(req, res) {
   try {
     // Get global leaderboard
-    const leaderboard = await User.getGlobalLeaderboard(100);
+    const leaderboard = await User.getGlobalLeaderboard(10);
 
     if (!leaderboard) {
       return res.status(500).json({
@@ -220,7 +220,7 @@ async function getGameLeaderboard(req, res) {
     const { gameId } = req.params;
     
     // Get game leaderboard
-    const leaderboard = await Leaderboard.getGameLeaderboard(gameId, 100);
+    const leaderboard = await Leaderboard.getGameLeaderboard(gameId, 10);
     
     // Return leaderboard data
     res.status(200).json({
