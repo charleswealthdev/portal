@@ -36,6 +36,7 @@ export const AuthProvider = ({ children }) => {
     loading: false, // Changed to false - only load when connecting
     authenticated: false,
     walletAddress: null,
+    accessToken: null,
   });
 
   useEffect(() => {
@@ -46,6 +47,7 @@ export const AuthProvider = ({ children }) => {
         loading: false,
         authenticated: true,
         walletAddress: publicKey.toString(),
+        accessToken: null, // Will be set after backend auth
       });
     } else {
       // Not connected
@@ -54,6 +56,7 @@ export const AuthProvider = ({ children }) => {
         loading: false,
         authenticated: false,
         walletAddress: null,
+        accessToken: null,
       });
     }
   }, [connected, publicKey]);
@@ -95,6 +98,7 @@ export const AuthProvider = ({ children }) => {
         loading: false,
         authenticated: false,
         walletAddress: null,
+        accessToken: null,
       });
     } catch (error) {
       console.error('Sign out error:', error);
