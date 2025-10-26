@@ -6,16 +6,25 @@ import { loadGameData } from './firebase';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 // Get user profile
-async function fetchUserProfile(userId, accessToken) {
+async function fetchUserProfile(userId, walletAddress, signMessage) {
   try {
-    if (!accessToken) {
-      throw new Error('No access token available');
+    if (!walletAddress || !signMessage) {
+      throw new Error('Wallet not connected');
     }
+
+    // Create a message to sign for authentication
+    const message = `Authenticate with PlayRush\n\nWallet: ${walletAddress}\nTimestamp: ${new Date().toISOString()}`;
+
+    // Sign the message
+    const signature = await signMessage(new TextEncoder().encode(message));
+    const signatureHex = Buffer.from(signature).toString('hex');
 
     const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
+        'x-wallet-address': walletAddress,
+        'x-signature': signatureHex,
+        'x-message': message,
         'Content-Type': 'application/json'
       }
     });
@@ -41,16 +50,25 @@ async function fetchUserProfile(userId, accessToken) {
 }
 
 // Update user profile
-async function updateProfileOnBackend(userId, profileData, accessToken) {
+async function updateProfileOnBackend(userId, profileData, walletAddress, signMessage) {
   try {
-    if (!accessToken) {
-      throw new Error('No access token available');
+    if (!walletAddress || !signMessage) {
+      throw new Error('Wallet not connected');
     }
+
+    // Create a message to sign for authentication
+    const message = `Update profile on PlayRush\n\nWallet: ${walletAddress}\nTimestamp: ${new Date().toISOString()}`;
+
+    // Sign the message
+    const signature = await signMessage(new TextEncoder().encode(message));
+    const signatureHex = Buffer.from(signature).toString('hex');
 
     const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
       method: 'PUT',
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
+        'x-wallet-address': walletAddress,
+        'x-signature': signatureHex,
+        'x-message': message,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(profileData)
@@ -76,15 +94,22 @@ async function updateProfileOnBackend(userId, profileData, accessToken) {
 }
 
 // Submit game score
-async function submitScore(gameId, score, accessToken, apiKey, userData = null) {
+async function submitScore(gameId, score, walletAddress, signMessage, apiKey, userData = null) {
   try {
-    if (!accessToken) {
-      throw new Error('No access token available');
+    if (!walletAddress || !signMessage) {
+      throw new Error('Wallet not connected');
     }
 
     if (!apiKey) {
       throw new Error('No API key available');
     }
+
+    // Create a message to sign for authentication
+    const message = `Submit score to PlayRush\n\nGame: ${gameId}\nScore: ${score}\nWallet: ${walletAddress}\nTimestamp: ${new Date().toISOString()}`;
+
+    // Sign the message
+    const signature = await signMessage(new TextEncoder().encode(message));
+    const signatureHex = Buffer.from(signature).toString('hex');
 
     const requestBody = { gameId, score };
     if (userData) {
@@ -94,7 +119,9 @@ async function submitScore(gameId, score, accessToken, apiKey, userData = null) 
     const response = await fetch(`${API_BASE_URL}/submit-score`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
+        'x-wallet-address': walletAddress,
+        'x-signature': signatureHex,
+        'x-message': message,
         'x-api-key': apiKey,
         'Content-Type': 'application/json'
       },
