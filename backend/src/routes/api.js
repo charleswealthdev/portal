@@ -1,5 +1,5 @@
 const express = require('express');
-const { verifyWalletToken, verifyApiKey, validateScore } = require('../middleware/walletAuth');
+const { verifyWalletAuth, verifyWalletToken, verifyApiKey, validateScore } = require('../middleware/auth');
 const {
   submitScore,
   getUserProfile,
@@ -89,7 +89,10 @@ router.get('/games', async (req, res) => {
 */
 router.post('/games',createGame);
 
+
+
 // </Under development>
+
 
 /*
 * // Tournaments
@@ -101,6 +104,7 @@ router.get('/tournaments',getAllTournaments);
 router.get('/tournaments/:tournamentId',getTournamentById);
 
 // </Under development>
+
 
 // Test endpoint to verify wallet token
 router.get('/test-wallet', async (req, res) => {
