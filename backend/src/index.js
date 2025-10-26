@@ -6,7 +6,7 @@ require('dotenv').config();
 const { db } = require('./config/firebase');
 
 // Import routes
-const apiRoutes = require('./routes/walletApi');
+const apiRoutes = require('./routes/api');
 
 const app = express();
 const PORT = process.env.PORT || 3002; // Changed from 3001 to 3002
