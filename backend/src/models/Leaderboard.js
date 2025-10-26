@@ -29,7 +29,7 @@ class Leaderboard {
     return true;
   }
 
-  static async getGameLeaderboard(gameId, limit = 100) {
+  static async getGameLeaderboard(gameId, limit = 10) {
     if (!db) {
       throw new Error('Database not initialized');
     }
