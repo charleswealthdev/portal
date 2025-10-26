@@ -81,7 +81,7 @@ class User {
     return { id: walletAddress, ...updatedDoc.data() };
   }
 
-  static async getGlobalLeaderboard(limit = 100) {
+  static async getGlobalLeaderboard(limit = 10) {
     if (!db) {
       throw new Error('Database not initialized');
     }
