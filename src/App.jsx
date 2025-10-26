@@ -86,7 +86,7 @@ export default function App() {
               <Route path="/" element={<Games />} />
               <Route path="/games" element={<Games />} />
               <Route path="/community" element={<Community />} />
-              <Route path="/profile" element={<Profile />} />
+              <Route path="/profile" element={<Profile onOpenModal={() => setIsModalOpen(true)} />} />
               <Route path="/leaderboard" element={<Leaderboard />} />
             </Routes>
           </div>
