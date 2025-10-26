@@ -1,16 +1,16 @@
 const { db, admin } = require('../config/firebase');
 
 class User {
-  static async createUser(privyDid, userData = {}) {
+  static async createUser(walletAddress, userData = {}) {
     if (!db) {
       throw new Error('Database not initialized');
     }
 
-    const userRef = db.collection('users').doc(privyDid);
+    const userRef = db.collection('users').doc(walletAddress);
     const userDoc = await userRef.get();
 
     if (userDoc.exists) {
-      return { id: privyDid, ...userDoc.data() };
+      return { id: walletAddress, ...userDoc.data() };
     }
 
     // Determine display name from userData (Google or wallet)
@@ -22,7 +22,7 @@ class User {
     }
 
     const newUser = {
-      id: privyDid,
+      id: walletAddress,
       displayName,
       ...userData,
       totalPoints: 0,
@@ -32,30 +32,30 @@ class User {
     };
 
     await userRef.set(newUser);
-    return { id: privyDid, ...newUser };
+    return { id: walletAddress, ...newUser };
   }
 
-  static async getUserByDid(privyDid) {
+  static async getUserByWalletAddress(walletAddress) {
     if (!db) {
       throw new Error('Database not initialized');
     }
 
-    const userRef = db.collection('users').doc(privyDid);
+    const userRef = db.collection('users').doc(walletAddress);
     const userDoc = await userRef.get();
 
     if (!userDoc.exists) {
       return null;
     }
 
-    return { id: privyDid, ...userDoc.data() };
+    return { id: walletAddress, ...userDoc.data() };
   }
 
-  static async updateTotalPoints(privyDid, points) {
+  static async updateTotalPoints(walletAddress, points) {
     if (!db) {
       throw new Error('Database not initialized');
     }
 
-    const userRef = db.collection('users').doc(privyDid);
+    const userRef = db.collection('users').doc(walletAddress);
     await userRef.update({
       totalPoints: admin.firestore.FieldValue.increment(points),
       gamesPlayed: admin.firestore.FieldValue.increment(1),
@@ -63,22 +63,22 @@ class User {
     });
 
     const updatedDoc = await userRef.get();
-    return { id: privyDid, ...updatedDoc.data() };
+    return { id: walletAddress, ...updatedDoc.data() };
   }
 
-  static async updateProfile(privyDid, profileData) {
+  static async updateProfile(walletAddress, profileData) {
     if (!db) {
       throw new Error('Database not initialized');
     }
 
-    const userRef = db.collection('users').doc(privyDid);
+    const userRef = db.collection('users').doc(walletAddress);
     await userRef.update({
       ...profileData,
       lastActive: admin.firestore.FieldValue.serverTimestamp()
     });
 
     const updatedDoc = await userRef.get();
-    return { id: privyDid, ...updatedDoc.data() };
+    return { id: walletAddress, ...updatedDoc.data() };
   }
 
   static async getGlobalLeaderboard(limit = 100) {
