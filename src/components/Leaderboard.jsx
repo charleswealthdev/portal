@@ -110,7 +110,7 @@ export default function Leaderboard({ onOpenModal }) {
     if (!authenticated || !user || !globalLeaderboard || !Array.isArray(globalLeaderboard)) return null;
 
     // Find user's rank in the global leaderboard
-    const userEntry = globalLeaderboard.find(entry => entry.userId === user.id);
+    const userEntry = globalLeaderboard.find(entry => entry.userId === user.walletAddress);
     return userEntry ? userEntry.rank : null;
   };
 
@@ -144,14 +144,14 @@ export default function Leaderboard({ onOpenModal }) {
               <div className="flex items-center mb-4 sm:mb-0">
                 <div className="w-16 h-16 rounded-full bg-[#8338ec]/30 flex items-center justify-center mr-4">
                   <span className="text-2xl">
-                    {user.google?.name?.charAt(0) || user.wallet?.address?.charAt(0) || 'P'}
+                    {user.google?.name?.charAt(0) || user.walletAddress?.charAt(0) || 'P'}
                   </span>
                 </div>
                 <div>
                   <h3 className="text-xl font-orbitron font-bold">
-                    {user.google?.name || 
-                     (user.wallet?.address ? 
-                      `${user.wallet.address.substring(0, 6)}...${user.wallet.address.substring(user.wallet.address.length - 4)}` : 
+                    {user.google?.name ||
+                     (user.walletAddress ?
+                      `${user.walletAddress.substring(0, 6)}...${user.walletAddress.substring(user.walletAddress.length - 4)}` :
                       'Player')}
                   </h3>
                   <p className="text-gray-400">Your position</p>
@@ -195,7 +195,7 @@ export default function Leaderboard({ onOpenModal }) {
                     <tr 
                       key={player.userId} 
                       className={`border-b border-[#8338ec]/10 hover:bg-[#1a1a1a] ${
-                        authenticated && user && player.userId === user.id ? 'bg-[#8338ec]/10' : ''
+                        authenticated && user && player.userId === user.walletAddress ? 'bg-[#8338ec]/10' : ''
                       }`}
                     >
                       <td className="p-4">
@@ -214,7 +214,7 @@ export default function Leaderboard({ onOpenModal }) {
                             <span>{player.displayName?.charAt(0) || 'P'}</span>
                           </div>
                           <span className="font-medium">{player.displayName || 'Anonymous Player'}</span>
-                          {authenticated && user && player.userId === user.id && (
+                          {authenticated && user && player.userId === user.walletAddress && (
                             <span className="ml-2 px-2 py-1 bg-[#8338ec]/30 text-[#8338ec] text-xs rounded-full">You</span>
                           )}
                         </div>
@@ -300,7 +300,7 @@ export default function Leaderboard({ onOpenModal }) {
                                       <span className="text-sm">{player.displayName?.charAt(0) || 'P'}</span>
                                     </div>
                                     <span>{player.displayName || 'Anonymous Player'}</span>
-                                    {authenticated && user && player.userId === user.id && (
+                                    {authenticated && user && player.userId === user.walletAddress && (
                                       <span className="ml-2 px-1 py-0.5 bg-[#8338ec]/30 text-[#8338ec] text-xs rounded-full">You</span>
                                     )}
                                   </div>
