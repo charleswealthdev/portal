@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
-const { verifyWalletToken, verifyApiKey, validateScore } = require('../backend/src/middleware/walletAuth');
-const { submitScore, getUserProfile, updateUserProfile, getGlobalLeaderboard, getGameLeaderboard } = require('../backend/src/controllers/scoreController');
+const { verifyWalletAuth, verifyApiKey, validateScore } = require('../../../backend/src/middleware/auth');
+const { submitScore, getUserProfile, updateUserProfile, getGlobalLeaderboard, getGameLeaderboard } = require('../../../backend/src/controllers/scoreController');
 
 // Create an Express app
 const app = express();
@@ -51,9 +51,9 @@ app.get('/api/community/recent-activity', async (req, res) => {
 });
 
 // Protected routes
-app.get('/api/users/:userId', verifyWalletToken, getUserProfile);
-app.put('/api/users/:userId', verifyWalletToken, updateUserProfile);
-app.post('/api/submit-score', verifyWalletToken, verifyApiKey, validateScore, submitScore);
+app.get('/api/users/:userId', verifyWalletAuth, getUserProfile);
+app.put('/api/users/:userId', verifyWalletAuth, updateUserProfile);
+app.post('/api/submit-score', verifyWalletAuth, verifyApiKey, validateScore, submitScore);
 app.get('/api/leaderboard/global', getGlobalLeaderboard);
 app.get('/api/leaderboard/:gameId', getGameLeaderboard);
 
