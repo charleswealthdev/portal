@@ -3,7 +3,7 @@ import { useAuth } from '../WalletAuth';
 import { fetchGlobalLeaderboard, fetchGameLeaderboard } from '../api';
 
 export default function Leaderboard({ onOpenModal }) {
-  const { authenticated, user, accessToken } = useAuth();
+  const { authenticated, user, walletAddress, signMessage } = useAuth();
   const [globalLeaderboard, setGlobalLeaderboard] = useState(null);
   const [gameLeaderboards, setGameLeaderboards] = useState({});
   const [loading, setLoading] = useState({ global: true, games: {} });
