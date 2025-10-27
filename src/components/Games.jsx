@@ -63,7 +63,7 @@ export default function Games({ onOpenModal }) {
   const [search, setSearch] = useState('');
   const [games, setGames] = useState(gamesData);
   const [loading, setLoading] = useState({});
-  const { authenticated, accessToken, user } = useAuth();
+  const { authenticated, walletAddress, signMessage, user } = useAuth();
   
   // Filter games based on search term
   const filteredGames = games.filter(game => 
@@ -84,7 +84,7 @@ export default function Games({ onOpenModal }) {
 
       // Pass authentication parameters to the game URL
       // Note: API key is server-side only for security - games must be configured with their API key
-      const gameUrl = `${game.url}?token=${encodeURIComponent(accessToken)}&gameId=${encodeURIComponent(game.id)}&userId=${encodeURIComponent(user.id)}`;
+      const gameUrl = `${game.url}?walletAddress=${encodeURIComponent(walletAddress)}&gameId=${encodeURIComponent(game.id)}&userId=${encodeURIComponent(user.id)}`;
 
       console.log('Launching game:', game.name);
       console.log('Game URL with auth params:', gameUrl.substring(0, 100) + '...');
