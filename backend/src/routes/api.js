@@ -127,8 +127,8 @@ router.get('/test-wallet', async (req, res) => {
 });
 
 // Protected routes (require authentication)
-router.get('/users/:userId', getUserProfile);
-router.put('/users/:userId', updateUserProfile);
+router.get('/users/:userId', verifyWalletAuth, getUserProfile);
+router.put('/users/:userId', verifyWalletAuth, updateUserProfile);
 router.post('/submit-score', verifyWalletToken, verifyApiKey, validateScore, submitScore);
 router.get('/leaderboard/global', getGlobalLeaderboard);
 router.get('/leaderboard/:gameId', getGameLeaderboard);
