@@ -1,0 +1,83 @@
+name: Setup Database and Games
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Install backend dependencies
+      run: |
+        cd backend
+        npm install
+
+    - name: Setup Firebase credentials
+      run: |
+        echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" > backend/runner-18abe-firebase-adminsdk-fbsvc-eee2faafd9.json
+
+    - name: Initialize community activities
+      run: |
+        cd backend
+        node src/scripts/initCommunityActivities.js
+
+    - name: Register default games
+      run: |
+        cd backend
+        echo "Registering Chain Bros..."
+        node -e "
+        const Game = require('./src/models/Game');
+        require('dotenv').config({ path: '../.env' });
+        Game.createGame({
+          gameId: 'chain-bros',
+          name: 'Chain Bros',
+          description: 'A blockchain-themed puzzle game'
+        }).then(result => {
+          console.log('Chain Bros registered:', result.id);
+          console.log('API Key:', result.plainApiKey);
+        }).catch(console.error);
+        "
+
+    - name: Register Tic Tac Toe
+      run: |
+        cd backend
+        node -e "
+        const Game = require('./src/models/Game');
+        require('dotenv').config({ path: '../.env' });
+        Game.createGame({
+          gameId: 'tic-tac-toe',
+          name: 'Tic Tac Toe',
+          description: 'Classic Tic Tac Toe game'
+        }).then(result => {
+          console.log('Tic Tac Toe registered:', result.id);
+          console.log('API Key:', result.plainApiKey);
+        }).catch(console.error);
+        "
+
+    - name: Register Cyber Run
+      run: |
+        cd backend
+        node -e "
+        const Game = require('./src/models/Game');
+        require('dotenv').config({ path: '../.env' });
+        Game.createGame({
+          gameId: 'cyber-run',
+          name: 'Cyber Run',
+          description: 'Fast-paced cyberpunk runner game'
+        }).then(result => {
+          console.log('Cyber Run registered:', result.id);
+          console.log('API Key:', result.plainApiKey);
+        }).catch(console.error);
+        "
