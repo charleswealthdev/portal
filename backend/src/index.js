@@ -7,6 +7,7 @@ const { db } = require('./config/firebase');
 
 // Import routes
 const apiRoutes = require('./routes/api');
+const leaderboardRoutes = require('./routes/leaderboardRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3002; // Changed from 3001 to 3002
@@ -48,6 +49,7 @@ app.get('/health', (req, res) => {
 
 // API routes
 app.use('/api', apiRoutes);
+app.use('/api/leaderboard', leaderboardRoutes);
 
 // 404 handler
 app.use((req, res) => {
