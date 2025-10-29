@@ -3,9 +3,7 @@ const { verifyWalletAuth, verifyWalletToken, verifyApiKey, validateScore } = req
 const {
   submitScore,
   getUserProfile,
-  updateUserProfile,
-  getGlobalLeaderboard,
-  getGameLeaderboard
+  updateUserProfile
 } = require('../controllers/scoreController');
 const {createGame} = require('../controllers/adminGameController');
 const { db } = require('../config/firebase');
@@ -130,8 +128,6 @@ router.get('/test-wallet', async (req, res) => {
 router.get('/users/:userId', verifyWalletAuth, getUserProfile);
 router.put('/users/:userId', verifyWalletAuth, updateUserProfile);
 router.post('/submit-score', verifyWalletToken, verifyApiKey, validateScore, submitScore);
-router.get('/leaderboard/global', getGlobalLeaderboard);
-router.get('/leaderboard/:gameId', getGameLeaderboard);
 
 // Catch-all route for unmatched routes
 router.use((req, res) => {
