@@ -1,116 +1,81 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../WalletAuth';
-import { fetchGlobalLeaderboard, fetchGameLeaderboard } from '../api';
 
 export default function Leaderboard({ onOpenModal }) {
-  const { authenticated, user, walletAddress, signMessage } = useAuth();
-  const [globalLeaderboard, setGlobalLeaderboard] = useState(null);
+  const { authenticated, user, walletAddress } = useAuth();
+  const [globalLeaderboard, setGlobalLeaderboard] = useState([]);
   const [gameLeaderboards, setGameLeaderboards] = useState({});
   const [loading, setLoading] = useState({ global: true, games: {} });
   const [expandedSection, setExpandedSection] = useState(null);
   const [seasonEndDate] = useState(new Date('2025-12-31'));
   const [error, setError] = useState(null);
 
-  // Game data - in a production implementation, this would come from your backend
   const games = [
-    {
-      id: 'chain-bros',
-      name: 'Chain Bros',
-      icon: '⛓️'
-    },
-    {
-      id: 'pixel-hunt',
-      name: 'Pixel Hunt',
-      icon: '🎯'
-    },
-    {
-      id: 'think-tac-toe',
-      name: 'Think Tac Toe',
-      icon: '🧩'
-    }
+    { id: 'chain-bros', name: 'Chain Bros', icon: '⛓️' },
+    { id: 'pixel-hunt', name: 'Pixel Hunt', icon: '🎯' },
+    { id: 'think-tac-toe', name: 'Think Tac Toe', icon: '🧩' }
   ];
 
+  // Fetch global and game leaderboards
   useEffect(() => {
-    async function fetchData(retryCount = 0) {
+    let isMounted = true;
+    async function fetchData() {
       try {
         setError(null);
+        setLoading(prev => ({ ...prev, global: true }));
 
         // Fetch global leaderboard
-        setLoading(prev => ({ ...prev, global: true }));
-        const globalData = await fetchGlobalLeaderboard();
-        setGlobalLeaderboard(globalData);
+        const resGlobal = await fetch('/api/leaderboard/global');
+        const jsonGlobal = await resGlobal.json();
+        if (jsonGlobal.success) setGlobalLeaderboard(jsonGlobal.data);
+        else setError(jsonGlobal.error || 'Failed to fetch global leaderboard');
         setLoading(prev => ({ ...prev, global: false }));
 
-        // Fetch game leaderboards
-        const gameLeaderboardsData = {};
+        // Fetch each game leaderboard
+        const newGameLeaderboards = {};
         for (const game of games) {
+          setLoading(prev => ({ ...prev, games: { ...prev.games, [game.id]: true } }));
           try {
-            setLoading(prev => ({ ...prev, games: { ...prev.games, [game.id]: true } }));
-            const gameData = await fetchGameLeaderboard(game.id);
-            gameLeaderboardsData[game.id] = gameData;
-            setLoading(prev => ({ ...prev, games: { ...prev.games, [game.id]: false } }));
-          } catch (err) {
-            console.error(`Failed to load leaderboard for ${game.id}:`, err);
-            setLoading(prev => ({ ...prev, games: { ...prev.games, [game.id]: false } }));
-            // Don't fail the entire operation if one game fails
+            const resGame = await fetch(`/api/leaderboard/game/${game.id}`);
+            const jsonGame = await resGame.json();
+            if (jsonGame.success) newGameLeaderboards[game.id] = jsonGame.data;
+            else newGameLeaderboards[game.id] = [];
+          } catch {
+            newGameLeaderboards[game.id] = [];
           }
+          setLoading(prev => ({ ...prev, games: { ...prev.games, [game.id]: false } }));
         }
-        setGameLeaderboards(gameLeaderboardsData);
+        if (isMounted) setGameLeaderboards(newGameLeaderboards);
       } catch (err) {
-        console.error('Failed to load leaderboard data:', err);
-
-        // Retry logic for network errors
-        if (retryCount < 3 && (err.message?.includes('fetch') || err.message?.includes('network'))) {
-          console.log(`Retrying leaderboard fetch (attempt ${retryCount + 1})...`);
-          setTimeout(() => fetchData(retryCount + 1), 1000 * (retryCount + 1));
-          return;
-        }
-
-        // Fix: Do not set error if the error is due to 403 or 401 unauthorized (likely token expired)
-        if (err.message?.includes('403') || err.message?.includes('401')) {
-          console.warn('Unauthorized access to leaderboard, skipping error display.');
-          setError(null);
-          setLoading({ global: false, games: {} });
-          return;
-        }
-
         setError('Failed to load leaderboard data. Please check your connection and try again.');
         setLoading({ global: false, games: {} });
       }
     }
     fetchData();
+    return () => { isMounted = false; }
   }, []);
 
   const toggleSection = (sectionId) => {
     setExpandedSection(expandedSection === sectionId ? null : sectionId);
   };
 
-  const formatScore = (score) => {
-    return score?.toLocaleString() || '0';
-  };
+  const formatScore = (score) => score?.toLocaleString() || '0';
 
   const getTimeRemaining = () => {
     const now = new Date();
     const difference = seasonEndDate - now;
-    
-    if (difference <= 0) {
-      return { days: 0, hours: 0, minutes: 0 };
-    }
-    
+    if (difference <= 0) return { days: 0, hours: 0, minutes: 0 };
     const days = Math.floor(difference / (1000 * 60 * 60 * 24));
     const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
     const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-    
     return { days, hours, minutes };
   };
 
   const { days, hours, minutes } = getTimeRemaining();
 
   const getUserRank = () => {
-    if (!authenticated || !user || !globalLeaderboard || !Array.isArray(globalLeaderboard)) return null;
-
-    // Find user's rank in the global leaderboard
-    const userEntry = globalLeaderboard.find(entry => entry.userId === user.walletAddress);
+    if (!authenticated || !user || !globalLeaderboard.length) return null;
+    const userEntry = globalLeaderboard.find(entry => entry.userId === walletAddress);
     return userEntry ? userEntry.rank : null;
   };
 
@@ -144,14 +109,14 @@ export default function Leaderboard({ onOpenModal }) {
               <div className="flex items-center mb-4 sm:mb-0">
                 <div className="w-16 h-16 rounded-full bg-[#8338ec]/30 flex items-center justify-center mr-4">
                   <span className="text-2xl">
-                    {user.google?.name?.charAt(0) || user.walletAddress?.charAt(0) || 'P'}
+                    {user.displayName?.charAt(0) || walletAddress?.charAt(0) || 'P'}
                   </span>
                 </div>
                 <div>
                   <h3 className="text-xl font-orbitron font-bold">
-                    {user.google?.name ||
-                     (user.walletAddress ?
-                      `${user.walletAddress.substring(0, 6)}...${user.walletAddress.substring(user.walletAddress.length - 4)}` :
+                    {user.displayName ||
+                     (walletAddress ?
+                      `${walletAddress.substring(0, 6)}...${walletAddress.substring(walletAddress.length - 4)}` :
                       'Player')}
                   </h3>
                   <p className="text-gray-400">Your position</p>
@@ -171,7 +136,6 @@ export default function Leaderboard({ onOpenModal }) {
             <h2 className="text-2xl font-orbitron font-bold">Global Rankings</h2>
             <p className="text-gray-400">Top players across all games</p>
           </div>
-          
           {loading.global ? (
             <div className="p-8 text-center">
               <svg className="animate-spin h-10 w-10 text-[#8338ec] mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -191,11 +155,11 @@ export default function Leaderboard({ onOpenModal }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {globalLeaderboard && Array.isArray(globalLeaderboard) && globalLeaderboard.map((player, index) => (
+                  {globalLeaderboard.map((player) => (
                     <tr 
                       key={player.userId} 
                       className={`border-b border-[#8338ec]/10 hover:bg-[#1a1a1a] ${
-                        authenticated && user && player.userId === user.walletAddress ? 'bg-[#8338ec]/10' : ''
+                        authenticated && walletAddress && player.userId === walletAddress ? 'bg-[#8338ec]/10' : ''
                       }`}
                     >
                       <td className="p-4">
@@ -214,7 +178,7 @@ export default function Leaderboard({ onOpenModal }) {
                             <span>{player.displayName?.charAt(0) || 'P'}</span>
                           </div>
                           <span className="font-medium">{player.displayName || 'Anonymous Player'}</span>
-                          {authenticated && user && player.userId === user.walletAddress && (
+                          {authenticated && walletAddress && player.userId === walletAddress && (
                             <span className="ml-2 px-2 py-1 bg-[#8338ec]/30 text-[#8338ec] text-xs rounded-full">You</span>
                           )}
                         </div>
@@ -231,7 +195,6 @@ export default function Leaderboard({ onOpenModal }) {
         {/* Game Leaderboards */}
         <div>
           <h2 className="text-2xl font-orbitron font-bold mb-6">Game Leaderboards</h2>
-          
           <div className="space-y-6">
             {games.map((game) => (
               <div 
@@ -260,7 +223,6 @@ export default function Leaderboard({ onOpenModal }) {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
-                
                 {expandedSection === game.id && (
                   <div className="border-t border-[#8338ec]/20 p-6">
                     {loading.games[game.id] ? (
@@ -282,7 +244,7 @@ export default function Leaderboard({ onOpenModal }) {
                             </tr>
                           </thead>
                           <tbody>
-                            {gameLeaderboards[game.id]?.map((player) => (
+                            {(gameLeaderboards[game.id] || []).map((player) => (
                               <tr key={`${game.id}-${player.userId}`} className="border-b border-[#8338ec]/10 hover:bg-[#1a1a1a]">
                                 <td className="p-3">
                                   <div className={`w-6 h-6 rounded-full flex items-center justify-center text-sm ${
@@ -300,7 +262,7 @@ export default function Leaderboard({ onOpenModal }) {
                                       <span className="text-sm">{player.displayName?.charAt(0) || 'P'}</span>
                                     </div>
                                     <span>{player.displayName || 'Anonymous Player'}</span>
-                                    {authenticated && user && player.userId === user.walletAddress && (
+                                    {authenticated && walletAddress && player.userId === walletAddress && (
                                       <span className="ml-2 px-1 py-0.5 bg-[#8338ec]/30 text-[#8338ec] text-xs rounded-full">You</span>
                                     )}
                                   </div>
