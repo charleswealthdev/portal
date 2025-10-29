@@ -1,7 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const { verifyWalletAuth, verifyApiKey, validateScore } = require('../../../backend/src/middleware/auth');
-const { submitScore, getUserProfile, updateUserProfile, getGlobalLeaderboard, getGameLeaderboard } = require('../../../backend/src/controllers/scoreController');
+const { submitScore, getUserProfile, updateUserProfile } = require('../../../backend/src/controllers/scoreController');
+const { getGlobalLeaderboard, getGameLeaderboard } = require('../../../backend/src/controllers/leaderboardController');
 
 // Create an Express app
 const app = express();
