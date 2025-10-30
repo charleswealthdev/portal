@@ -1,10 +1,17 @@
+// This file is intentionally left blank.
+// The functionality previously in this file (a custom sign-in modal)
+// has been replaced by the default modal provided by the Solana Wallet Adapter's
+// WalletModalProvider, which is configured in src/main.jsx.
+
+
+
 // This component is no longer needed since wallet connection is handled directly in Header
 // Keeping as empty component to avoid breaking imports
-export default function SignInModal({ isOpen, onClose }) {
-  if (!isOpen) return null;
+// export default function SignInModal({ isOpen, onClose }) {
+//   if (!isOpen) return null;
 
-  return null; // Modal removed - wallet connection handled by Header
-}
+//   return null; // Modal removed - wallet connection handled by Header
+// }
 
 
 
