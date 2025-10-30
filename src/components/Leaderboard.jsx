@@ -108,7 +108,7 @@ export default function Leaderboard({ onOpenModal }) {
   const { days, hours, minutes } = getTimeRemaining();
 
   const getUserRank = () => {
-    if (!authenticated || !user || !globalLeaderboard || !Array.isArray(globalLeaderboard)) return null;
+    if (!connected || !publicKey || !globalLeaderboard || !Array.isArray(globalLeaderboard)) return null;
 
     // Find user's rank in the global leaderboard
     const userEntry = globalLeaderboard.find(entry => entry.userId === user.id);
@@ -139,21 +139,20 @@ export default function Leaderboard({ onOpenModal }) {
         )}
 
         {/* User Rank Card */}
-        {authenticated && user && (
+        {connected && publicKey && (
           <div className="bg-gradient-to-r from-[#8338ec]/20 to-[#3a86ff]/20 border border-[#8338ec]/50 rounded-xl p-6 mb-8">
             <div className="flex flex-col sm:flex-row items-center justify-between">
               <div className="flex items-center mb-4 sm:mb-0">
                 <div className="w-16 h-16 rounded-full bg-[#8338ec]/30 flex items-center justify-center mr-4">
                   <span className="text-2xl">
-                    {user.google?.name?.charAt(0) || user.wallet?.address?.charAt(0) || 'P'}
+                    {publicKey.toBase58()?.charAt(0) || 'P'}
                   </span>
                 </div>
                 <div>
                   <h3 className="text-xl font-orbitron font-bold">
-                    {user.google?.name || 
-                     (user.wallet?.address ? 
-                      `${user.wallet.address.substring(0, 6)}...${user.wallet.address.substring(user.wallet.address.length - 4)}` : 
-                      'Player')}
+                    {publicKey.toBase58() ? 
+                      `${publicKey.toBase58().substring(0, 6)}...${publicKey.toBase58().substring(publicKey.toBase58().length - 4)}` : 
+                      'Player'}
                   </h3>
                   <p className="text-gray-400">Your position</p>
                 </div>
@@ -196,7 +195,7 @@ export default function Leaderboard({ onOpenModal }) {
                     <tr 
                       key={player.userId} 
                       className={`border-b border-[#8338ec]/10 hover:bg-[#1a1a1a] ${
-                        authenticated && user && player.userId === user.id ? 'bg-[#8338ec]/10' : ''
+                        connected && publicKey && player.userId === publicKey.toBase58() ? 'bg-[#8338ec]/10' : ''
                       }`}
                     >
                       <td className="p-4">
@@ -215,7 +214,7 @@ export default function Leaderboard({ onOpenModal }) {
                             <span>{player.displayName?.charAt(0) || 'P'}</span>
                           </div>
                           <span className="font-medium">{player.displayName || 'Anonymous Player'}</span>
-                          {authenticated && user && player.userId === user.id && (
+                          {connected && publicKey && player.userId === publicKey.toBase58() && (
                             <span className="ml-2 px-2 py-1 bg-[#8338ec]/30 text-[#8338ec] text-xs rounded-full">You</span>
                           )}
                         </div>
@@ -301,7 +300,7 @@ export default function Leaderboard({ onOpenModal }) {
                                       <span className="text-sm">{player.displayName?.charAt(0) || 'P'}</span>
                                     </div>
                                     <span>{player.displayName || 'Anonymous Player'}</span>
-                                    {authenticated && user && player.userId === user.id && (
+                                    {connected && publicKey && player.userId === publicKey.toBase58() && (
                                       <span className="ml-2 px-1 py-0.5 bg-[#8338ec]/30 text-[#8338ec] text-xs rounded-full">You</span>
                                     )}
                                   </div>
@@ -321,7 +320,7 @@ export default function Leaderboard({ onOpenModal }) {
         </div>
 
         {/* Sign In Prompt */}
-        {!authenticated && (
+        {!connected && (
           <div className="mt-8 p-6 bg-[#111111] rounded-xl border border-[#8338ec]/30 text-center">
             <h3 className="text-xl font-orbitron font-bold mb-2">Join the Competition</h3>
             <p className="text-gray-400 mb-4">Sign in to track your progress and climb the leaderboard!</p>
