@@ -6,15 +6,15 @@ const { db, admin } = require('../config/firebase');
 async function submitScore(req, res) {
   try {
     // Extract data from request
-    const { gameId, score, userData } = req.body;
-    // Extract userId from Privy token payload
-    const userId = req.user.userId || req.user.id;
+    const { gameId, score } = req.body;
+    // Extract userId from signature verification middleware
+    const userId = req.user.id;
 
     // Get user data
-    let user = await User.getUserByDid(userId);
+    let user = await User.getUserById(userId);
     if (!user) {
-      // Create user if not found, using provided userData or default
-      user = await User.createUser(userId, userData || {});
+      // Create user if not found
+      user = await User.createUser(userId);
     }
 
     // Get game data
@@ -26,7 +26,7 @@ async function submitScore(req, res) {
     // Prepare user data for leaderboard entry
     const userDataForLeaderboard = {
       displayName: user.displayName || 'Anonymous Player',
-      photoURL: user.photoURL || null
+      photoURL: user.photoURL || null // This field may be deprecated as we don't have user avatars
     };
 
     // Update game-specific leaderboard and get score difference
@@ -48,6 +48,20 @@ async function submitScore(req, res) {
       transaction.update(userRef, updateData);
     });
 
+    // If there was a new high score, create a community activity event
+    if (scoreDifference > 0) {
+      const activityRef = db.collection('communityActivities').doc();
+      await activityRef.set({
+        type: 'HIGH_SCORE',
+        userId: userId,
+        displayName: userDataForLeaderboard.displayName,
+        gameId: gameId,
+        gameName: game.name || 'a game',
+        score: score,
+        timestamp: admin.firestore.FieldValue.serverTimestamp()
+      });
+    }
+
     // Return success response
     res.status(200).json({
       success: true,
@@ -59,11 +73,6 @@ async function submitScore(req, res) {
       }
     });
   } catch (error) {
-    if (error.message === 'Database not initialized') {
-      console.error('Database not initialized:', error);
-      return res.status(500).json({ error: 'Database service not available' });
-    }
-
     console.error('Error submitting score:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -72,25 +81,13 @@ async function submitScore(req, res) {
 async function getUserProfile(req, res) {
   try {
     const { userId } = req.params;
-    // Extract requesting user ID from Privy token payload (if authenticated)
-    const requestingUserId = req.user ? (req.user.userId || req.user.id) : userId;
-
-    // Check if user is requesting their own data (skip if not authenticated)
-    if (req.user && userId !== requestingUserId) {
-      return res.status(403).json({
-        success: false,
-        error: 'Access denied'
-      });
-    }
 
     // Get user data
-    let user = await User.getUserByDid(userId);
-    if (!user) {
-      // Create user if not found
-      user = await User.createUser(userId, { displayName: 'Anonymous Player' });
-    }
+    let user = await User.getUserById(userId);
 
     if (!user) {
+      // We don't create a user on a public GET request.
+      // If the user doesn't exist, they don't have a profile.
       return res.status(404).json({
         success: false,
         error: 'User not found'
@@ -110,14 +107,6 @@ async function getUserProfile(req, res) {
       }
     });
   } catch (error) {
-    if (error.message === 'Database not initialized') {
-      console.error('Database not initialized:', error);
-      return res.status(500).json({
-        success: false,
-        error: 'Database service not available'
-      });
-    }
-
     console.error('Error fetching user profile:', error);
     res.status(500).json({
       success: false,
@@ -129,15 +118,14 @@ async function getUserProfile(req, res) {
 async function updateUserProfile(req, res) {
   try {
     const { userId } = req.params;
-    // Extract requesting user ID from Privy token payload (if authenticated)
-    const requestingUserId = req.user ? (req.user.userId || req.user.id) : userId;
+    const requestingUserId = req.user.id;
     const { displayName } = req.body;
 
-    // Check if user is updating their own data (skip if not authenticated)
-    if (req.user && userId !== requestingUserId) {
+    // Authorization: Ensure the signed public key matches the user being updated
+    if (userId !== requestingUserId) {
       return res.status(403).json({
         success: false,
-        error: 'Access denied'
+        error: 'Access denied. You can only update your own profile.'
       });
     }
 
@@ -150,7 +138,7 @@ async function updateUserProfile(req, res) {
     }
 
     // Check if user exists, create if not
-    let user = await User.getUserByDid(userId);
+    let user = await User.getUserById(userId);
     if (!user) {
       user = await User.createUser(userId, { displayName });
     }
@@ -161,24 +149,9 @@ async function updateUserProfile(req, res) {
     // Return updated user data
     res.status(200).json({
       success: true,
-      data: {
-        userId: updatedUser.id,
-        displayName: updatedUser.displayName,
-        totalPoints: updatedUser.totalPoints || 0,
-        gamesPlayed: updatedUser.gamesPlayed || 0,
-        createdAt: updatedUser.createdAt,
-        lastActive: updatedUser.lastActive
-      }
+      data: updatedUser
     });
   } catch (error) {
-    if (error.message === 'Database not initialized') {
-      console.error('Database not initialized:', error);
-      return res.status(500).json({
-        success: false,
-        error: 'Database service not available'
-      });
-    }
-
     console.error('Error updating user profile:', error);
     res.status(500).json({
       success: false,
@@ -189,30 +162,12 @@ async function updateUserProfile(req, res) {
 
 async function getGlobalLeaderboard(req, res) {
   try {
-    // Get global leaderboard
     const leaderboard = await User.getGlobalLeaderboard(100);
-
-    if (!leaderboard) {
-      return res.status(500).json({
-        success: false,
-        error: 'No leaderboard data available',
-      });
-    }
-    
-    // Return leaderboard data
     res.status(200).json({
       success: true,
       data: leaderboard
     });
   } catch (error) {
-    if (error.message === 'Database not initialized') {
-      console.error('Database not initialized:', error);
-      return res.status(500).json({ 
-        success: false, 
-        error: 'Database service not available' 
-      });
-    }
-    
     console.error('Error fetching global leaderboard:', error);
     res.status(500).json({ 
       success: false, 
@@ -224,24 +179,12 @@ async function getGlobalLeaderboard(req, res) {
 async function getGameLeaderboard(req, res) {
   try {
     const { gameId } = req.params;
-    
-    // Get game leaderboard
     const leaderboard = await Leaderboard.getGameLeaderboard(gameId, 100);
-    
-    // Return leaderboard data
     res.status(200).json({
       success: true,
       data: leaderboard
     });
   } catch (error) {
-    if (error.message === 'Database not initialized') {
-      console.error('Database not initialized:', error);
-      return res.status(500).json({ 
-        success: false, 
-        error: 'Database service not available' 
-      });
-    }
-    
     console.error('Error fetching game leaderboard:', error);
     res.status(500).json({ 
       success: false, 
