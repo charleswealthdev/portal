@@ -7,11 +7,11 @@ async function submitScore(req, res) {
   try {
     // Extract data from request
     const { gameId, score, userData } = req.body;
-    // Extract userId from wallet token payload
-    const userId = req.user.walletAddress || req.user.id;
+    // Extract userId from Privy token payload
+    const userId = req.user.userId || req.user.id;
 
     // Get user data
-    let user = await User.getUserByWalletAddress(userId);
+    let user = await User.getUserByDid(userId);
     if (!user) {
       // Create user if not found, using provided userData or default
       user = await User.createUser(userId, userData || {});
@@ -29,17 +29,23 @@ async function submitScore(req, res) {
       photoURL: user.photoURL || null
     };
 
-    // Update game-specific leaderboard
-    await Leaderboard.updateGameLeaderboard(gameId, userId, score, userDataForLeaderboard);
+    // Update game-specific leaderboard and get score difference
+    const { scoreDifference } = await Leaderboard.updateGameLeaderboard(gameId, userId, score, userDataForLeaderboard);
 
     // Update user's total points and games played using a transaction
     await db.runTransaction(async (transaction) => {
       const userRef = db.collection('users').doc(userId);
-      transaction.update(userRef, {
-        totalPoints: admin.firestore.FieldValue.increment(score),
+      
+      const updateData = {
         gamesPlayed: admin.firestore.FieldValue.increment(1),
         lastActive: new Date()
-      });
+      };
+
+      if (scoreDifference > 0) {
+        updateData.totalPoints = admin.firestore.FieldValue.increment(scoreDifference);
+      }
+
+      transaction.update(userRef, updateData);
     });
 
     // Return success response
@@ -66,8 +72,8 @@ async function submitScore(req, res) {
 async function getUserProfile(req, res) {
   try {
     const { userId } = req.params;
-    // Extract requesting user ID from wallet token payload (if authenticated)
-    const requestingUserId = req.user ? (req.user.walletAddress || req.user.id) : userId;
+    // Extract requesting user ID from Privy token payload (if authenticated)
+    const requestingUserId = req.user ? (req.user.userId || req.user.id) : userId;
 
     // Check if user is requesting their own data (skip if not authenticated)
     if (req.user && userId !== requestingUserId) {
@@ -78,7 +84,7 @@ async function getUserProfile(req, res) {
     }
 
     // Get user data
-    let user = await User.getUserByWalletAddress(userId);
+    let user = await User.getUserByDid(userId);
     if (!user) {
       // Create user if not found
       user = await User.createUser(userId, { displayName: 'Anonymous Player' });
@@ -123,8 +129,8 @@ async function getUserProfile(req, res) {
 async function updateUserProfile(req, res) {
   try {
     const { userId } = req.params;
-    // Extract requesting user ID from wallet token payload (if authenticated)
-    const requestingUserId = req.user ? (req.user.walletAddress || req.user.id) : userId;
+    // Extract requesting user ID from Privy token payload (if authenticated)
+    const requestingUserId = req.user ? (req.user.userId || req.user.id) : userId;
     const { displayName } = req.body;
 
     // Check if user is updating their own data (skip if not authenticated)
@@ -144,7 +150,7 @@ async function updateUserProfile(req, res) {
     }
 
     // Check if user exists, create if not
-    let user = await User.getUserByWalletAddress(userId);
+    let user = await User.getUserByDid(userId);
     if (!user) {
       user = await User.createUser(userId, { displayName });
     }
@@ -181,10 +187,73 @@ async function updateUserProfile(req, res) {
   }
 }
 
+async function getGlobalLeaderboard(req, res) {
+  try {
+    // Get global leaderboard
+    const leaderboard = await User.getGlobalLeaderboard(100);
 
+    if (!leaderboard) {
+      return res.status(500).json({
+        success: false,
+        error: 'No leaderboard data available',
+      });
+    }
+    
+    // Return leaderboard data
+    res.status(200).json({
+      success: true,
+      data: leaderboard
+    });
+  } catch (error) {
+    if (error.message === 'Database not initialized') {
+      console.error('Database not initialized:', error);
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Database service not available' 
+      });
+    }
+    
+    console.error('Error fetching global leaderboard:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Internal server error' 
+    });
+  }
+}
+
+async function getGameLeaderboard(req, res) {
+  try {
+    const { gameId } = req.params;
+    
+    // Get game leaderboard
+    const leaderboard = await Leaderboard.getGameLeaderboard(gameId, 100);
+    
+    // Return leaderboard data
+    res.status(200).json({
+      success: true,
+      data: leaderboard
+    });
+  } catch (error) {
+    if (error.message === 'Database not initialized') {
+      console.error('Database not initialized:', error);
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Database service not available' 
+      });
+    }
+    
+    console.error('Error fetching game leaderboard:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Internal server error' 
+    });
+  }
+}
 
 module.exports = {
   submitScore,
   getUserProfile,
-  updateUserProfile
+  updateUserProfile,
+  getGlobalLeaderboard,
+  getGameLeaderboard
 };
