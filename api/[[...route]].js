@@ -1,8 +1,7 @@
 const express = require('express');
 const cors = require('cors');
-const { verifyWalletAuth, verifyApiKey, validateScore } = require('../../../backend/src/middleware/auth');
-const { submitScore, getUserProfile, updateUserProfile } = require('../../../backend/src/controllers/scoreController');
-const { getGlobalLeaderboard, getGameLeaderboard } = require('../../../backend/src/controllers/leaderboardController');
+const { verifySolanaSignature, verifyApiKey, validateScore } = require('../backend/src/middleware/auth');
+const { submitScore, getUserProfile, updateUserProfile, getGlobalLeaderboard, getGameLeaderboard } = require('../backend/src/controllers/scoreController');
 
 // Create an Express app
 const app = express();
@@ -21,40 +20,40 @@ app.get('/api/community/recent-activity', async (req, res) => {
   try {
     // Import Firebase dynamically
     const { db } = await import('../backend/src/config/firebase.js');
-
+    
     if (!db) {
-      return res.status(500).json({
-        success: false,
-        error: 'Database service not available'
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Database service not available' 
       });
     }
-
+    
     const activitiesRef = db.collection('communityActivities');
     const q = activitiesRef.orderBy('timestamp', 'desc').limit(20);
     const querySnapshot = await q.get();
-
+    
     const activities = [];
     querySnapshot.forEach((doc) => {
       activities.push({ id: doc.id, ...doc.data() });
     });
-
+    
     res.status(200).json({
       success: true,
       data: activities
     });
   } catch (error) {
     console.error('Error fetching community activities:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Internal server error'
+    res.status(500).json({ 
+      success: false, 
+      error: 'Internal server error' 
     });
   }
 });
 
 // Protected routes
-app.get('/api/users/:userId', verifyWalletAuth, getUserProfile);
-app.put('/api/users/:userId', verifyWalletAuth, updateUserProfile);
-app.post('/api/submit-score', verifyWalletAuth, verifyApiKey, validateScore, submitScore);
+app.get('/api/users/:userId', getUserProfile);
+app.put('/api/users/:userId', verifySolanaSignature, updateUserProfile);
+app.post('/api/submit-score', verifySolanaSignature, verifyApiKey, validateScore, submitScore);
 app.get('/api/leaderboard/global', getGlobalLeaderboard);
 app.get('/api/leaderboard/:gameId', getGameLeaderboard);
 
