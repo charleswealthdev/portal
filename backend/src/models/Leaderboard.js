@@ -8,73 +8,56 @@ class Leaderboard {
 
     const scoreRef = db.collection('gameScores').doc(`${gameId}-${userId}`);
     const scoreDoc = await scoreRef.get();
+    let scoreDifference = 0;
 
     if (scoreDoc.exists) {
       const existingScore = scoreDoc.data().score;
-      if (score <= existingScore) {
-        // Don't update if new score is not higher
-        return true;
+      if (score > existingScore) {
+        // New high score
+        scoreDifference = score - existingScore;
+        await scoreRef.update({
+          score,
+          userData,
+          timestamp: admin.firestore.FieldValue.serverTimestamp()
+        });
       }
+    } else {
+      // First score for this game
+      scoreDifference = score;
+      await scoreRef.set({
+        gameId,
+        userId,
+        score,
+        userData,
+        timestamp: admin.firestore.FieldValue.serverTimestamp()
+      });
     }
 
-    // Update or create the score
-    await scoreRef.set({
-      gameId,
-      userId,
-      score,
-      userData,
-      timestamp: admin.firestore.FieldValue.serverTimestamp()
-    });
-
-    return true;
+    return { scoreDifference };
   }
 
-  static async getGameLeaderboard(gameId, limit = 10) {
+  static async getGameLeaderboard(gameId, limit = 100) {
     if (!db) {
       throw new Error('Database not initialized');
     }
 
-    try {
-      const scoresRef = db.collection('gameScores');
-      const query = scoresRef.where('gameId', '==', gameId).orderBy('score', 'desc').limit(limit);
-      const querySnapshot = await query.get();
+    const scoresRef = db.collection('gameScores');
+    const query = scoresRef.where('gameId', '==', gameId).orderBy('score', 'desc').limit(limit);
+    const querySnapshot = await query.get();
 
-      const leaderboard = [];
-      let rank = 1;
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        leaderboard.push({
-          userId: data.userId,
-          displayName: data.userData.displayName || 'Anonymous Player',
-          score: data.score,
-          rank: rank++
-        });
+    const leaderboard = [];
+    let rank = 1;
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      leaderboard.push({
+        userId: data.userId,
+        displayName: data.userData.displayName || 'Anonymous Player',
+        score: data.score,
+        rank: rank++
       });
+    });
 
-      return leaderboard;
-    } catch (error) {
-      // If index error, fall back to simpler query without ordering
-      if (error.code === 9 && error.message.includes('requires an index')) {
-        console.warn('Firestore index required for ordered query, falling back to unordered results');
-        const scoresRef = db.collection('gameScores');
-        const fallbackQuery = scoresRef.where('gameId', '==', gameId).limit(limit);
-        const fallbackSnapshot = await fallbackQuery.get();
-
-        const leaderboard = [];
-        fallbackSnapshot.forEach((doc) => {
-          const data = doc.data();
-          leaderboard.push({
-            userId: data.userId,
-            displayName: data.userData.displayName || 'Anonymous Player',
-            score: data.score,
-            rank: 0 // No ranking without ordering
-          });
-        });
-
-        return leaderboard;
-      }
-      throw error;
-    }
+    return leaderboard;
   }
 
   static async getUserRankInGame(gameId, userId) {
