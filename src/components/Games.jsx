@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from '../WalletAuth';
+import { useState } from 'react';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 
 // Game data - in a production implementation, this would come from your backend
 const gamesData = [
@@ -59,43 +60,21 @@ const gamesData = [
   }
 ];
 
-export default function Games({ onOpenModal }) {
+export default function Games() {
   const [search, setSearch] = useState('');
-  const [games, setGames] = useState(gamesData);
-  const [loading, setLoading] = useState({});
-  const { authenticated, walletAddress, signMessage, user } = useAuth();
-  
-  // Filter games based on search term
-  const filteredGames = games.filter(game => 
+  const { connected } = useWallet();
+
+  const filteredGames = gamesData.filter(game => 
     game.name.toLowerCase().includes(search.toLowerCase()) ||
     game.description.toLowerCase().includes(search.toLowerCase())
   );
 
-  // Function to handle game launch
-  const handleGameLaunch = async (game) => {
-    if (!authenticated) {
-      // Show sign in modal
-      onOpenModal();
-      return;
-    }
-
-    try {
-      setLoading(prev => ({ ...prev, [game.id]: true }));
-
-      // Pass authentication parameters to the game URL
-      // Note: API key is server-side only for security - games must be configured with their API key
-      const gameUrl = `${game.url}?walletAddress=${encodeURIComponent(walletAddress)}&gameId=${encodeURIComponent(game.id)}&userId=${encodeURIComponent(user.id)}`;
-
-      console.log('Launching game:', game.name);
-      console.log('Game URL with auth params:', gameUrl.substring(0, 100) + '...');
-
-      // Open the game in a new tab with authentication parameters
-      window.open(gameUrl, '_blank');
-    } catch (error) {
-      console.error('Error launching game:', error);
-    } finally {
-      setLoading(prev => ({ ...prev, [game.id]: false }));
-    }
+  const handleGameLaunch = (game) => {
+    // The new flow assumes the game client is also a Solana-aware application
+    // and will handle its own connection and score submission.
+    // The portal is only responsible for linking to the game.
+    console.log('Launching game:', game.name);
+    window.open(game.url, '_blank');
   };
 
   return (
@@ -104,7 +83,6 @@ export default function Games({ onOpenModal }) {
         <h1 className="text-3xl font-orbitron font-bold mb-2">Games</h1>
         <p className="text-gray-400 mb-8">Play and earn rewards on the Playrush platform.</p>
         
-        {/* Search Bar */}
         <div className="mb-8">
           <div className="relative max-w-md">
             <input
@@ -120,11 +98,10 @@ export default function Games({ onOpenModal }) {
           </div>
         </div>
         
-        {/* Games Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredGames.map((game) => (
-            <div key={game.id} className="bg-[#111111] rounded-xl border border-[#8338ec]/30 overflow-hidden hover:border-[#8338ec]/60 transition-all hover:shadow-xl hover:shadow-[#8338ec]/20">
-              <div className="p-6">
+            <div key={game.id} className="bg-[#111111] rounded-xl border border-[#8338ec]/30 overflow-hidden hover:border-[#8338ec]/60 transition-all hover:shadow-xl hover:shadow-[#8338ec]/20 flex flex-col">
+              <div className="p-6 flex-grow">
                 <div className="flex items-start justify-between">
                   <div className="text-4xl">{game.icon}</div>
                   <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
@@ -142,41 +119,22 @@ export default function Games({ onOpenModal }) {
                 </div>
               </div>
               <div className="px-6 py-4 bg-[#1a1a1a] border-t border-[#8338ec]/20">
-                <button 
-                  onClick={() => handleGameLaunch(game)}
-                  disabled={loading[game.id]}
-                  className="w-full bg-gradient-to-r from-[#8338ec] to-[#3a86ff] hover:from-[#722ed1] hover:to-[#1d6bcf] text-white font-bold py-2 px-4 rounded-lg transition-all flex items-center justify-center"
-                >
-                  {loading[game.id] ? (
-                    <>
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Loading...
-                    </>
-                  ) : (
-                    'Play Now'
-                  )}
-                </button>
+                {connected ? (
+                  <button 
+                    onClick={() => handleGameLaunch(game)}
+                    className="w-full bg-gradient-to-r from-[#8338ec] to-[#3a86ff] hover:from-[#722ed1] hover:to-[#1d6bcf] text-white font-bold py-2 px-4 rounded-lg transition-all flex items-center justify-center"
+                  >
+                    Play Now
+                  </button>
+                ) : (
+                  <div className="flex justify-center">
+                     <WalletMultiButton />
+                  </div>
+                )}
               </div>
             </div>
           ))}
         </div>
-        
-        {/* Authentication Status */}
-        {!authenticated && (
-          <div className="mt-8 p-6 bg-[#111111] rounded-xl border border-[#8338ec]/30 text-center">
-            <h3 className="text-xl font-orbitron font-bold mb-2">Ready to Play?</h3>
-            <p className="text-gray-400 mb-4">Sign in to access all games and start earning rewards!</p>
-            <button
-              onClick={onOpenModal}
-              className="bg-gradient-to-r from-[#ff006e] to-[#8338ec] hover:from-[#d6005a] hover:to-[#722ed1] text-white font-bold py-2 px-6 rounded-lg transition-all"
-            >
-              Sign In
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );
