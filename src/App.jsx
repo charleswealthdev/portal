@@ -1,13 +1,12 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { Link } from 'react-router-dom';
-import { useState, useEffect } from 'react';
-import { WalletAuthProvider } from './WalletAuth';
+import { useEffect } from 'react';
 import Header from './components/Header';
 import Games from './components/Games';
 import Community from './components/Community';
 import Profile from './components/Profile';
 import Leaderboard from './components/Leaderboard';
-import SignInModal from './components/SignInModal';
+
 
 const BottomNav = () => {
   const location = useLocation();
@@ -77,23 +76,20 @@ export default function App() {
   }, []);
 
   return (
-    <WalletAuthProvider>
-      <Router>
-        <div className="bg-[#0A0A0A] text-white min-h-screen relative font-orbitron">
-          <Header />
-          <div className="pb-16 sm:pb-0 pt-16">
-            <Routes>
-              <Route path="/" element={<Games />} />
-              <Route path="/games" element={<Games />} />
-              <Route path="/community" element={<Community />} />
-              <Route path="/profile" element={<Profile onOpenModal={() => setIsModalOpen(true)} />} />
-              <Route path="/leaderboard" element={<Leaderboard />} />
-            </Routes>
-          </div>
-          <BottomNav />
-          <SignInModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+    <Router>
+      <div className="bg-[#0A0A0A] text-white min-h-screen relative font-orbitron">
+        <Header />
+        <div className="pb-16 sm:pb-0 pt-16">
+          <Routes>
+            <Route path="/" element={<Games />} />
+            <Route path="/games" element={<Games />} />
+            <Route path="/community" element={<Community />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/leaderboard" element={<Leaderboard />} />
+          </Routes>
         </div>
-      </Router>
-    </WalletAuthProvider>
+        <BottomNav />
+      </div>
+    </Router>
   );
 }
