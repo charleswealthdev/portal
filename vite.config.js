@@ -46,21 +46,5 @@ export default defineConfig({
     include: ['buffer', 'util', '@coinbase/wallet-sdk'],
     exclude: ['vite-plugin-node-polyfills'],
   },
-  server: {
-    headers: {
-      'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com; frame-src 'self' https://accounts.google.com; connect-src 'self' https://api.mainnet-beta.solana.com https://explorer-api.walletconnect.com wss://relay.walletconnect.com http://localhost:3003 http://localhost:3002 https://www.google-analytics.com https://firestore.googleapis.com; img-src 'self' data: https://lh3.googleusercontent.com https://www.googletagmanager.com https://www.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; object-src 'none'; base-uri 'self';",
-    },
-    proxy: {
-      '/api': {
-        target: 'http://localhost:3002',
-        changeOrigin: true,
-        secure: false,
-      },
-    },
-    mimeTypes: {
-      'js': 'application/javascript',
-      'mjs': 'application/javascript',
-      'json': 'application/json',
-    },
-  },
+  
 });
